@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
  <head>
   <meta charset="utf-8"/>
@@ -942,7 +943,85 @@ label {
   <div class="toast" id="toast">
   </div>
   <script>
-   const STORE = 'schoolHubV3',
+   const byId = (id) => document.getElementById(id);
+const side = byId('side');
+const menu = byId('menu');
+const heading = byId('heading');
+const date = byId('date');
+const theme = byId('theme');
+const authBtn = byId('authBtn');
+const tutorialBtn = byId('tutorialBtn');
+const lc = byId('lc');
+const nc = byId('nc');
+const sc = byId('sc');
+const fc = byId('fc');
+const profileOff = byId('profileOff');
+const profileOn = byId('profileOn');
+const friendsOff = byId('friendsOff');
+const friendsOn = byId('friendsOn');
+const bigAvatar = byId('bigAvatar');
+const profileName = byId('profileName');
+const profileHandle = byId('profileHandle');
+const displayName = byId('displayName');
+const username = byId('username');
+const bio = byId('bio');
+const saveProfile = byId('saveProfile');
+const peopleSearch = byId('peopleSearch');
+const searchPeople = byId('searchPeople');
+const peopleResults = byId('peopleResults');
+const requestCount = byId('requestCount');
+const requests = byId('requests');
+const friendCount = byId('friendCount');
+const friendList = byId('friendList');
+const linkFilter = byId('linkFilter');
+const linkSearch = byId('linkSearch');
+const linksList = byId('linksList');
+const linkModal = byId('linkModal');
+const linkId = byId('linkId');
+const linkName = byId('linkName');
+const linkUrl = byId('linkUrl');
+const linkSubject = byId('linkSubject');
+const saveLink = byId('saveLink');
+const classList = byId('classList');
+const classModal = byId('classModal');
+const classId = byId('classId');
+const className = byId('className');
+const classDay = byId('classDay');
+const classSubject = byId('classSubject');
+const classStart = byId('classStart');
+const classEnd = byId('classEnd');
+const classRoom = byId('classRoom');
+const saveClass = byId('saveClass');
+const noteList = byId('noteList');
+const noteTitle = byId('noteTitle');
+const noteBody = byId('noteBody');
+const newNote = byId('newNote');
+const delNote = byId('delNote');
+const display = byId('display');
+const earned = byId('earned');
+const possible = byId('possible');
+const gradeBtn = byId('gradeBtn');
+const gradeOut = byId('gradeOut');
+const timerText = byId('timerText');
+const timerStart = byId('timerStart');
+const timerReset = byId('timerReset');
+const subjectName = byId('subjectName');
+const addSubject = byId('addSubject');
+const subjects = byId('subjects');
+const authModal = byId('authModal');
+const authTitle = byId('authTitle');
+const authMode = byId('authMode');
+const authSubmit = byId('authSubmit');
+const email = byId('email');
+const password = byId('password');
+const tutorial = byId('tutorial');
+const tTitle = byId('tTitle');
+const tCopy = byId('tCopy');
+const tBack = byId('tBack');
+const tNext = byId('tNext');
+
+
+const STORE = 'schoolHubV3',
   defaults = {
     links: [],
     schedule: [],
@@ -1251,7 +1330,7 @@ timerReset.onclick = () => {
   timerStart.textContent = 'Start';
   showClock()
 };
-export.onclick = () => {
+document.getElementById('export').onclick = () => {
   let a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], {
     type: 'application/json'
@@ -1259,7 +1338,7 @@ export.onclick = () => {
   a.download = 'school-hub-backup.json';
   a.click()
 };
-import.onchange = async e => {
+document.getElementById('import').onchange = async e => {
   try {
     d = {
       ...defaults,
@@ -1276,10 +1355,11 @@ clear.onclick = () => {
     location.reload()
   }
 };
-const SUPABASE_URL = 'https://tcahuhfmehhjkfwgdqxa.supabase.co',
-  SUPABASE_ANON_KEY = 'sb_publishable_N6mMKCRQ18u_zAWbv4Xt4Q_3DBZqfUl',
-  configured = !SUPABASE_URL.startsWith('YOUR_'),
-  sb = configured ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const SUPABASE_URL = 'https://tcahuhfmehhjkfwgdqxa.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_N6mMKCRQ18u_zAWbv4Xt4Q_3DBZqfUl';
+const configured = true;
+const supabaseLibraryReady = Boolean(window.supabase && typeof window.supabase.createClient === 'function');
+const sb = supabaseLibraryReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 let user = null,
   profile = null,
   createMode = false;
@@ -1289,7 +1369,7 @@ authBtn.onclick = async () => {
     user = profile = null;
     authUI()
   } else {
-    if (!configured) return toast('Complete Supabase setup first');
+    if (!supabaseLibraryReady) return toast('Social features could not load. Local tools still work.');
     authModal.classList.add('on')
   }
 };
