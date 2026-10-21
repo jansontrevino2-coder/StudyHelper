@@ -8,13 +8,13 @@
   <title>School Hub</title>
   <style>
     :root {
-      --accent: #7c3aed;
-      --accent-2: #a855f7;
-      --accent-soft: rgba(124, 58, 237, 0.15);
-      --bg: #080b13;
+      --accent: #1d4ed8;
+      --accent-2: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.13);
+      --bg: #0b1220;
       --panel: rgba(18, 23, 38, 0.82);
-      --panel-solid: #121726;
-      --panel-2: #1a2032;
+      --panel-solid: #111b2e;
+      --panel-2: #172238;
       --text: #f8fafc;
       --muted: #9aa5b8;
       --border: rgba(255,255,255,0.09);
@@ -77,7 +77,7 @@
     .storage-note { font-size:12px; color:var(--muted); line-height:1.5; padding:14px; border:1px solid var(--border); border-radius:14px; background:var(--panel); }
     .main { min-width:0; padding: 28px clamp(18px, 4vw, 48px) 60px; }
     .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; }
-    .greeting h1 { margin:0 0 5px; font-size:clamp(26px,4vw,40px); letter-spacing:-1.4px; }
+    .greeting h1 { margin:0 0 5px; font-size:clamp(26px,4vw,40px); letter-spacing:-0.6px; }
     .greeting p { margin:0; color:var(--muted); }
     .top-actions { display:flex; gap:10px; }
     .icon-btn, .btn {
@@ -96,7 +96,7 @@
     .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:24px; }
     .stat, .card {
       border:1px solid var(--border); background:var(--panel); backdrop-filter:blur(18px);
-      border-radius:var(--radius); box-shadow:var(--shadow);
+      border-radius:16px; box-shadow:var(--shadow);
     }
     .stat { padding:20px; }
     .stat-icon { width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:var(--accent-soft);font-size:19px;margin-bottom:17px; }
@@ -161,6 +161,10 @@
     .timer-actions { display:flex;justify-content:center;gap:10px;flex-wrap:wrap; }
     .settings-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px; }
     .colors { display:flex; gap:12px; flex-wrap:wrap; }
+    .subject-manager { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .subject-chip { display:inline-flex; align-items:center; gap:7px; padding:8px 10px; border:1px solid var(--border); background:var(--panel-2); border-radius:8px; color:var(--text); font-size:13px; }
+    .subject-chip button { border:0; background:transparent; color:var(--muted); padding:0; }
+    .subject-badge { display:inline-block; padding:5px 9px; border-radius:7px; background:var(--accent-soft); color:var(--accent-2); font-size:12px; font-weight:700; }
     .color { width:37px;height:37px;border:3px solid transparent;border-radius:50%; }
     .color.active { border-color:var(--text); }
     .modal { position:fixed; inset:0; z-index:100; display:none; place-items:center; padding:18px; background:rgba(0,0,0,.62); backdrop-filter:blur(8px); }
@@ -198,45 +202,45 @@
 <body>
   <div class="app">
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><div class="brand-logo">🎓</div><div><strong>School Hub</strong><small>Study smarter</small></div></div>
+      <div class="brand"><div class="brand-logo">SH</div><div><strong>School Hub</strong><small>Academic workspace</small></div></div>
       <nav class="nav">
-        <button class="nav-btn active" data-page="dashboard">🏠 Dashboard</button>
-        <button class="nav-btn" data-page="links">🔗 Saved Links</button>
-        <button class="nav-btn" data-page="calculator">🧮 Calculator</button>
-        <button class="nav-btn" data-page="notes">📝 Notes</button>
-        <button class="nav-btn" data-page="grades">🎓 Grade Calculator</button>
-        <button class="nav-btn" data-page="timer">⏱️ Focus Timer</button>
-        <button class="nav-btn" data-page="settings">⚙️ Settings</button>
+        <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+        <button class="nav-btn" data-page="links">Saved Links</button>
+        <button class="nav-btn" data-page="calculator">Calculator</button>
+        <button class="nav-btn" data-page="notes">Notes</button>
+        <button class="nav-btn" data-page="grades">Grade Calculator</button>
+        <button class="nav-btn" data-page="timer">Focus Timer</button>
+        <button class="nav-btn" data-page="settings">Settings</button>
       </nav>
-      <div class="sidebar-bottom"><div class="storage-note">🔒 Your information stays in this browser using local storage.</div></div>
+      <div class="sidebar-bottom"><div class="storage-note">Your information is stored locally in this browser.</div></div>
     </aside>
 
     <main class="main">
       <header class="topbar">
         <div style="display:flex;gap:12px;align-items:center">
           <button class="icon-btn mobile-menu" id="menuBtn" aria-label="Open menu">☰</button>
-          <div class="greeting"><h1 id="pageHeading">Welcome back 👋</h1><p id="todayText"></p></div>
+          <div class="greeting"><h1 id="pageHeading">Welcome back</h1><p id="todayText"></p></div>
         </div>
         <div class="top-actions"><button class="icon-btn" id="themeBtn" aria-label="Toggle theme">☀️</button><button class="btn primary" id="quickAdd"><span>＋</span><span class="btn-label">Add Link</span></button></div>
       </header>
 
       <section class="page active" id="dashboard">
         <div class="stats">
-          <div class="stat"><div class="stat-icon">🔗</div><strong id="linkCount">0</strong><span>Saved links</span></div>
-          <div class="stat"><div class="stat-icon">📝</div><strong id="noteCount">0</strong><span>Notes</span></div>
-          <div class="stat"><div class="stat-icon">🔥</div><strong id="sessionCount">0</strong><span>Focus sessions</span></div>
-          <div class="stat"><div class="stat-icon">⏳</div><strong id="focusMinutes">0</strong><span>Minutes focused</span></div>
+          <div class="stat"><div class="stat-icon">L</div><strong id="linkCount">0</strong><span>Saved links</span></div>
+          <div class="stat"><div class="stat-icon">N</div><strong id="noteCount">0</strong><span>Notes</span></div>
+          <div class="stat"><div class="stat-icon">S</div><strong id="sessionCount">0</strong><span>Focus sessions</span></div>
+          <div class="stat"><div class="stat-icon">M</div><strong id="focusMinutes">0</strong><span>Minutes focused</span></div>
         </div>
         <div class="grid-2">
           <div class="card"><div class="card-head"><h2>Favorite links</h2><button class="btn" data-go="links">View all</button></div><div class="quick-grid" id="favoriteLinks"></div></div>
           <div class="card"><div class="card-head"><h2>Quick tools</h2></div><div class="tools-grid">
-            <button class="btn" data-go="calculator">🧮 Calculator</button><button class="btn" data-go="notes">📝 New note</button><button class="btn" data-go="grades">🎓 Grades</button><button class="btn" data-go="timer">⏱️ Focus</button>
+            <button class="btn" data-go="calculator">Calculator</button><button class="btn" data-go="notes">New note</button><button class="btn" data-go="grades">Grades</button><button class="btn" data-go="timer">Focus</button>
           </div></div>
         </div>
       </section>
 
       <section class="page" id="links">
-        <div class="section-title"><div><h2>Saved Links</h2><p>Keep every school website in one place.</p></div><div class="search"><span>⌕</span><input id="linkSearch" placeholder="Search links..." /></div></div>
+        <div class="section-title"><div><h2>Saved Links</h2><p>Keep every school website in one place.</p></div><div style="display:flex;gap:10px;flex-wrap:wrap"><select id="subjectFilter" aria-label="Filter by subject" style="min-width:180px"><option value="">All subjects</option></select><div class="search"><span>⌕</span><input id="linkSearch" placeholder="Search links..." /></div></div></div>
         <div class="link-grid" id="linkGrid"></div>
       </section>
 
@@ -284,7 +288,9 @@
         <div class="section-title"><div><h2>Settings</h2><p>Make School Hub feel like yours.</p></div></div>
         <div class="settings-grid">
           <div class="card"><h3 style="margin-bottom:17px">Profile</h3><label>Your name</label><input id="studentName" placeholder="Student" /><button class="btn primary" id="saveProfile" style="margin-top:13px">Save profile</button></div>
-          <div class="card"><h3 style="margin-bottom:17px">Accent color</h3><div class="colors" id="colors"><button class="color" style="background:#7c3aed" data-color="#7c3aed" data-color2="#a855f7" aria-label="Purple"></button><button class="color" style="background:#2563eb" data-color="#2563eb" data-color2="#06b6d4" aria-label="Blue"></button><button class="color" style="background:#059669" data-color="#059669" data-color2="#22c55e" aria-label="Green"></button><button class="color" style="background:#e11d48" data-color="#e11d48" data-color2="#f97316" aria-label="Pink"></button><button class="color" style="background:#ea580c" data-color="#ea580c" data-color2="#facc15" aria-label="Orange"></button></div></div>
+          <div class="card"><h3 style="margin-bottom:17px">Accent color</h3><div class="colors" id="colors"><button class="color" style="background:#1d4ed8" data-color="#1d4ed8" data-color2="#2563eb" aria-label="Purple"></button><button class="color" style="background:#2563eb" data-color="#2563eb" data-color2="#06b6d4" aria-label="Blue"></button><button class="color" style="background:#059669" data-color="#059669" data-color2="#22c55e" aria-label="Green"></button><button class="color" style="background:#e11d48" data-color="#e11d48" data-color2="#f97316" aria-label="Pink"></button><button class="color" style="background:#ea580c" data-color="#ea580c" data-color2="#facc15" aria-label="Orange"></button></div></div>
+
+          <div class="card"><h3 style="margin-bottom:10px">Subject categories</h3><p style="color:var(--muted)">Create categories for links and academic resources.</p><div style="display:flex;gap:8px"><input id="newSubject" placeholder="New subject name" /><button class="btn primary" id="addSubject">Add</button></div><div id="subjectManager" class="subject-manager"></div></div>
           <div class="card"><h3 style="margin-bottom:10px">Backup</h3><p style="color:var(--muted)">Export everything to a JSON file or import a previous backup.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="exportData">Export data</button><label class="btn" style="margin:0">Import data<input type="file" id="importData" accept="application/json" hidden /></label></div></div>
           <div class="card"><h3 style="margin-bottom:10px">Danger zone</h3><p style="color:var(--muted)">Delete all saved links, notes, settings, and focus history.</p><button class="btn danger" id="clearData">Clear all data</button></div>
         </div>
@@ -298,7 +304,7 @@
       <input type="hidden" id="editLinkId" />
       <div><label>Link name</label><input id="linkName" placeholder="Google Classroom" /></div>
       <div style="margin-top:12px"><label>Website URL</label><input id="linkUrl" placeholder="https://classroom.google.com" /></div>
-      <div style="margin-top:12px"><label>Category</label><select id="linkCategory"><option>School</option><option>Study</option><option>Research</option><option>Tools</option><option>Other</option></select></div>
+      <div style="margin-top:12px"><label>Subject category</label><select id="linkCategory"></select></div>
       <div class="modal-actions"><button class="btn" id="cancelModal">Cancel</button><button class="btn primary" id="saveLink">Save link</button></div>
     </div>
   </div>
@@ -307,13 +313,10 @@
   <script>
     const STORE_KEY = 'schoolHubDataV1';
     const defaults = {
-      links: [
-        {id: crypto.randomUUID(), name:'Google Classroom', url:'https://classroom.google.com', category:'School', favorite:true},
-        {id: crypto.randomUUID(), name:'Khan Academy', url:'https://www.khanacademy.org', category:'Study', favorite:true},
-        {id: crypto.randomUUID(), name:'Desmos', url:'https://www.desmos.com/calculator', category:'Tools', favorite:false}
-      ],
+      links: [],
+      subjects: ['General','Mathematics','Science','English','History','Languages','Computer Science'],
       notes: [{id: crypto.randomUUID(), title:'Welcome to School Hub', body:'Use this space for assignments, study notes, reminders, and ideas.', updated:Date.now()}],
-      profile: {name:'Student', theme:'dark', accent:'#7c3aed', accent2:'#a855f7'},
+      profile: {name:'Student', theme:'dark', accent:'#1d4ed8', accent2:'#2563eb'},
       stats: {sessions:0, focusMinutes:0}
     };
     let data = loadData();
@@ -322,7 +325,7 @@
     let calcExpression = '';
 
     function loadData(){
-      try { const saved = JSON.parse(localStorage.getItem(STORE_KEY)); return saved ? {...defaults,...saved,profile:{...defaults.profile,...saved.profile},stats:{...defaults.stats,...saved.stats}} : structuredClone(defaults); }
+      try { const saved = JSON.parse(localStorage.getItem(STORE_KEY)); return saved ? {...defaults,...saved,subjects:saved.subjects||defaults.subjects,profile:{...defaults.profile,...saved.profile},stats:{...defaults.stats,...saved.stats}} : structuredClone(defaults); }
       catch { return structuredClone(defaults); }
     }
     function saveData(){ localStorage.setItem(STORE_KEY, JSON.stringify(data)); updateStats(); }
@@ -334,7 +337,7 @@
     function goTo(page){
       document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page));
       document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
-      const titles={dashboard:`Welcome back, ${data.profile.name || 'Student'} 👋`,links:'Saved Links',calculator:'Calculator',notes:'Notes',grades:'Grade Calculator',timer:'Focus Timer',settings:'Settings'};
+      const titles={dashboard:`Welcome back, ${data.profile.name || 'Student'}`,links:'Saved Links',calculator:'Calculator',notes:'Notes',grades:'Grade Calculator',timer:'Focus Timer',settings:'Settings'};
       document.getElementById('pageHeading').textContent=titles[page];
       document.getElementById('sidebar').classList.remove('open');
       if(page==='notes') renderNotes();
@@ -352,19 +355,40 @@
     }
     document.getElementById('themeBtn').onclick=()=>{data.profile.theme=data.profile.theme==='light'?'dark':'light';applyTheme();saveData();};
 
+    function renderSubjectControls(){
+      const modalSelect=document.getElementById('linkCategory');
+      const filterSelect=document.getElementById('subjectFilter');
+      const current=modalSelect?.value || 'General';
+      if(modalSelect){ modalSelect.innerHTML=data.subjects.map(x=>`<option>${escapeHTML(x)}</option>`).join(''); modalSelect.value=data.subjects.includes(current)?current:'General'; }
+      if(filterSelect){ const chosen=filterSelect.value; filterSelect.innerHTML='<option value="">All subjects</option>'+data.subjects.map(x=>`<option>${escapeHTML(x)}</option>`).join(''); filterSelect.value=data.subjects.includes(chosen)?chosen:''; }
+      const manager=document.getElementById('subjectManager');
+      if(manager) manager.innerHTML=data.subjects.map(x=>`<span class="subject-chip">${escapeHTML(x)}${x==='General'?'':`<button onclick="deleteSubject('${encodeURIComponent(x)}')" aria-label="Delete ${escapeHTML(x)}">×</button>`}</span>`).join('');
+    }
+    function addSubject(){
+      const input=document.getElementById('newSubject'); const name=input.value.trim();
+      if(!name) return toast('Enter a subject name');
+      if(data.subjects.some(x=>x.toLowerCase()===name.toLowerCase())) return toast('That subject already exists');
+      data.subjects.push(name); input.value=''; saveData(); renderSubjectControls(); toast('Subject added');
+    }
+    window.deleteSubject=encoded=>{
+      const name=decodeURIComponent(encoded); if(data.links.some(l=>l.category===name)) return toast('Move or delete links in this subject first');
+      data.subjects=data.subjects.filter(x=>x!==name); saveData(); renderSubjectControls(); toast('Subject removed');
+    };
+
     function renderLinks(filter=''){
       const grid=document.getElementById('linkGrid');
-      const list=data.links.filter(l=>(l.name+' '+l.url+' '+l.category).toLowerCase().includes(filter.toLowerCase())).sort((a,b)=>b.favorite-a.favorite);
-      grid.innerHTML=list.length?list.map(l=>`<article class="link-card"><button class="fav ${l.favorite?'on':''}" onclick="toggleFavorite('${l.id}')">★</button><div class="link-icon">${l.category==='School'?'🏫':l.category==='Study'?'📚':l.category==='Research'?'🔎':l.category==='Tools'?'🛠️':'🌐'}</div><h3>${escapeHTML(l.name)}</h3><p>${escapeHTML(l.category)} • ${escapeHTML(niceHost(l.url))}</p><a href="${escapeHTML(l.url)}" target="_blank" rel="noopener noreferrer">Open website ↗</a><div class="card-menu"><button onclick="editLink('${l.id}')">Edit</button><button onclick="deleteLink('${l.id}')">Delete</button></div></article>`).join(''):'<div class="empty" style="grid-column:1/-1">No links found. Add your first one!</div>';
+      const selected=document.getElementById('subjectFilter')?.value||'';
+      const list=data.links.filter(l=>(!selected||l.category===selected)&&(l.name+' '+l.url+' '+l.category).toLowerCase().includes(filter.toLowerCase())).sort((a,b)=>b.favorite-a.favorite);
+      grid.innerHTML=list.length?list.map(l=>`<article class="link-card"><button class="fav ${l.favorite?'on':''}" onclick="toggleFavorite('${l.id}')">★</button><div class="link-icon">${escapeHTML((l.category||'G').slice(0,1).toUpperCase())}</div><h3>${escapeHTML(l.name)}</h3><p><span class="subject-badge">${escapeHTML(l.category||'General')}</span></p><p>${escapeHTML(niceHost(l.url))}</p><a href="${escapeHTML(l.url)}" target="_blank" rel="noopener noreferrer">Open website ↗</a><div class="card-menu"><button onclick="editLink('${l.id}')">Edit</button><button onclick="deleteLink('${l.id}')">Delete</button></div></article>`).join(''):'<div class="empty" style="grid-column:1/-1">No links found. Add your first one!</div>';
       renderFavorites(); updateStats();
     }
     function renderFavorites(){
       const box=document.getElementById('favoriteLinks'); const favs=data.links.filter(l=>l.favorite).slice(0,6);
-      box.innerHTML=favs.length?favs.map(l=>`<a class="quick-link" href="${escapeHTML(l.url)}" target="_blank" rel="noopener noreferrer"><div class="link-icon">🔗</div><div style="min-width:0"><strong>${escapeHTML(l.name)}</strong><small>${escapeHTML(niceHost(l.url))}</small></div></a>`).join(''):'<div class="empty" style="grid-column:1/-1">Star a saved link to see it here.</div>';
+      box.innerHTML=favs.length?favs.map(l=>`<a class="quick-link" href="${escapeHTML(l.url)}" target="_blank" rel="noopener noreferrer"><div class="link-icon">${escapeHTML((l.category||'G').slice(0,1).toUpperCase())}</div><div style="min-width:0"><strong>${escapeHTML(l.name)}</strong><small>${escapeHTML(niceHost(l.url))}</small></div></a>`).join(''):'<div class="empty" style="grid-column:1/-1">Star a saved link to see it here.</div>';
     }
     function openLinkModal(link=null){
       document.getElementById('modalTitle').textContent=link?'Edit link':'Add a link';
-      document.getElementById('editLinkId').value=link?.id||''; document.getElementById('linkName').value=link?.name||''; document.getElementById('linkUrl').value=link?.url||''; document.getElementById('linkCategory').value=link?.category||'School';
+      document.getElementById('editLinkId').value=link?.id||''; document.getElementById('linkName').value=link?.name||''; document.getElementById('linkUrl').value=link?.url||''; renderSubjectControls(); document.getElementById('linkCategory').value=link?.category||'General';
       document.getElementById('linkModal').classList.add('open'); setTimeout(()=>document.getElementById('linkName').focus(),50);
     }
     function closeLinkModal(){document.getElementById('linkModal').classList.remove('open')}
@@ -380,6 +404,7 @@
       saveData();renderLinks();closeLinkModal();toast(id?'Link updated':'Link added');
     };
     document.getElementById('linkSearch').addEventListener('input',e=>renderLinks(e.target.value));
+    document.getElementById('subjectFilter').addEventListener('change',()=>renderLinks(document.getElementById('linkSearch').value));
 
     function renderNotes(){
       if(!data.notes.length){const n={id:crypto.randomUUID(),title:'Untitled note',body:'',updated:Date.now()};data.notes.push(n);activeNoteId=n.id;saveData();}
@@ -412,6 +437,8 @@
 
     function updateStats(){document.getElementById('linkCount').textContent=data.links.length;document.getElementById('noteCount').textContent=data.notes.length;document.getElementById('sessionCount').textContent=data.stats.sessions;document.getElementById('focusMinutes').textContent=data.stats.focusMinutes}
     document.getElementById('studentName').value=data.profile.name;
+    document.getElementById('addSubject').onclick=addSubject;
+    document.getElementById('newSubject').addEventListener('keydown',e=>{if(e.key==='Enter')addSubject()});
     document.getElementById('saveProfile').onclick=()=>{data.profile.name=document.getElementById('studentName').value.trim()||'Student';saveData();goTo('settings');toast('Profile saved')};
     document.getElementById('colors').onclick=e=>{const b=e.target.closest('[data-color]');if(!b)return;data.profile.accent=b.dataset.color;data.profile.accent2=b.dataset.color2;applyTheme();saveData()};
     document.getElementById('exportData').onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='school-hub-backup.json';a.click();URL.revokeObjectURL(a.href);toast('Backup exported')};
@@ -419,7 +446,7 @@
     document.getElementById('clearData').onclick=()=>{if(confirm('Clear ALL School Hub data? This cannot be undone.')){localStorage.removeItem(STORE_KEY);location.reload()}};
 
     document.getElementById('todayText').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-    applyTheme();renderLinks();renderNotes();updateStats();updateTimer();goTo('dashboard');
+    applyTheme();renderSubjectControls();renderLinks();renderNotes();updateStats();updateTimer();goTo('dashboard');
   </script>
 </body>
 </html>
