@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7c3aed" />
+  <meta name="description" content="A private, local-first school dashboard for links, notes, grades, calculations, and focus sessions." />
+  <title>School Hub</title>
+  <style>
+    :root {
+      --accent: #7c3aed;
+      --accent-2: #a855f7;
+      --accent-soft: rgba(124, 58, 237, 0.15);
+      --bg: #080b13;
+      --panel: rgba(18, 23, 38, 0.82);
+      --panel-solid: #121726;
+      --panel-2: #1a2032;
+      --text: #f8fafc;
+      --muted: #9aa5b8;
+      --border: rgba(255,255,255,0.09);
+      --danger: #fb7185;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --shadow: 0 18px 60px rgba(0,0,0,.28);
+      --radius: 20px;
+    }
+    body.light {
+      --bg: #eef2ff;
+      --panel: rgba(255,255,255,.82);
+      --panel-solid: #ffffff;
+      --panel-2: #f3f5fb;
+      --text: #172033;
+      --muted: #64748b;
+      --border: rgba(15,23,42,.10);
+      --shadow: 0 18px 55px rgba(71,85,105,.16);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 5%, var(--accent-soft), transparent 28%),
+        radial-gradient(circle at 90% 85%, rgba(14,165,233,.10), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      transition: background .25s, color .25s;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 260px minmax(0,1fr); }
+    .sidebar {
+      position: sticky; top: 0; height: 100vh; padding: 24px 18px;
+      border-right: 1px solid var(--border); background: rgba(8,11,19,.72);
+      backdrop-filter: blur(18px); z-index: 20;
+    }
+    body.light .sidebar { background: rgba(255,255,255,.68); }
+    .brand { display:flex; align-items:center; gap:12px; padding: 3px 8px 25px; }
+    .brand-logo {
+      width:44px; height:44px; display:grid; place-items:center; border-radius:15px;
+      color:white; font-size:22px; background: linear-gradient(135deg,var(--accent),var(--accent-2));
+      box-shadow: 0 10px 30px var(--accent-soft);
+    }
+    .brand strong { display:block; font-size:18px; }
+    .brand small { color:var(--muted); }
+    .nav { display:grid; gap:7px; }
+    .nav-btn {
+      width:100%; display:flex; align-items:center; gap:12px; border:1px solid transparent;
+      color:var(--muted); background:transparent; padding:12px 14px; border-radius:14px; text-align:left;
+      transition:.18s ease;
+    }
+    .nav-btn:hover { background:var(--panel-2); color:var(--text); }
+    .nav-btn.active { color:white; background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 10px 30px var(--accent-soft); }
+    .sidebar-bottom { position:absolute; left:18px; right:18px; bottom:20px; }
+    .storage-note { font-size:12px; color:var(--muted); line-height:1.5; padding:14px; border:1px solid var(--border); border-radius:14px; background:var(--panel); }
+    .main { min-width:0; padding: 28px clamp(18px, 4vw, 48px) 60px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; }
+    .greeting h1 { margin:0 0 5px; font-size:clamp(26px,4vw,40px); letter-spacing:-1.4px; }
+    .greeting p { margin:0; color:var(--muted); }
+    .top-actions { display:flex; gap:10px; }
+    .icon-btn, .btn {
+      border:1px solid var(--border); color:var(--text); background:var(--panel); border-radius:13px;
+      min-height:44px; padding:0 15px; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      transition:.18s ease; box-shadow:0 8px 24px rgba(0,0,0,.08);
+    }
+    .icon-btn { width:44px; padding:0; }
+    .btn:hover, .icon-btn:hover { transform:translateY(-2px); border-color:var(--accent); }
+    .btn.primary { color:white; background:linear-gradient(135deg,var(--accent),var(--accent-2)); border:0; }
+    .btn.danger { color:var(--danger); }
+    .mobile-menu { display:none; }
+    .page { display:none; animation:fade .22s ease; }
+    .page.active { display:block; }
+    @keyframes fade { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+    .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:24px; }
+    .stat, .card {
+      border:1px solid var(--border); background:var(--panel); backdrop-filter:blur(18px);
+      border-radius:var(--radius); box-shadow:var(--shadow);
+    }
+    .stat { padding:20px; }
+    .stat-icon { width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:var(--accent-soft);font-size:19px;margin-bottom:17px; }
+    .stat strong { font-size:27px; display:block; }
+    .stat span { color:var(--muted); font-size:13px; }
+    .grid-2 { display:grid; grid-template-columns:1.3fr .7fr; gap:20px; }
+    .card { padding:22px; }
+    .card-head { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:18px; }
+    .card h2, .card h3 { margin:0; }
+    .section-title { display:flex; justify-content:space-between; align-items:end; gap:16px; margin-bottom:20px; }
+    .section-title h2 { margin:0 0 5px; font-size:28px; }
+    .section-title p { margin:0; color:var(--muted); }
+    .quick-grid, .tools-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .quick-link { display:flex; align-items:center; gap:12px; padding:13px; border:1px solid var(--border); border-radius:15px; text-decoration:none; background:var(--panel-2); transition:.18s; }
+    .quick-link:hover { transform:translateY(-2px); border-color:var(--accent); }
+    .link-icon { flex:0 0 40px; height:40px; display:grid;place-items:center;border-radius:12px;background:var(--accent-soft); font-size:20px; }
+    .quick-link strong { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .quick-link small { color:var(--muted); }
+    .empty { color:var(--muted); text-align:center; padding:32px 16px; border:1px dashed var(--border); border-radius:16px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+    label { display:block; color:var(--muted); font-size:13px; margin:0 0 7px; }
+    input, textarea, select {
+      width:100%; border:1px solid var(--border); outline:none; color:var(--text); background:var(--panel-2);
+      border-radius:13px; padding:12px 13px; transition:.18s;
+    }
+    textarea { min-height:160px; resize:vertical; }
+    input:focus, textarea:focus, select:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+    .search { position:relative; min-width:min(360px,100%); }
+    .search input { padding-left:40px; }
+    .search span { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); }
+    .link-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:15px; }
+    .link-card { position:relative; padding:18px; border:1px solid var(--border); border-radius:18px; background:var(--panel); box-shadow:var(--shadow); }
+    .link-card .link-icon { margin-bottom:18px; }
+    .link-card h3 { margin:0 36px 7px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .link-card p { color:var(--muted); margin:0 0 16px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .link-card a { color:var(--accent-2); font-weight:700; text-decoration:none; }
+    .fav { position:absolute; top:13px; right:13px; width:35px;height:35px;border-radius:10px;border:1px solid var(--border);color:var(--muted);background:var(--panel-2); }
+    .fav.on { color:var(--warning); }
+    .card-menu { display:flex; gap:8px; margin-top:17px; }
+    .card-menu button { flex:1; border:1px solid var(--border);border-radius:11px;padding:8px;color:var(--muted);background:var(--panel-2); }
+    .notes-layout { display:grid; grid-template-columns:280px minmax(0,1fr); gap:18px; }
+    .note-list { display:grid; gap:9px; max-height:590px; overflow:auto; }
+    .note-item { border:1px solid var(--border);background:var(--panel-2);border-radius:13px;padding:12px;text-align:left;color:var(--text); }
+    .note-item.active { border-color:var(--accent); background:var(--accent-soft); }
+    .note-item strong { display:block; overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .note-item small { color:var(--muted); }
+    .calc { max-width:520px; margin:auto; }
+    .calc-display { width:100%; min-height:100px; text-align:right; font-size:36px; font-weight:700; padding:24px; overflow-wrap:anywhere; }
+    .calc-history { min-height:22px; font-size:13px; color:var(--muted); text-align:right; margin:8px 4px 14px; }
+    .calc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .calc-grid button { min-height:57px;border:1px solid var(--border);border-radius:14px;background:var(--panel-2);color:var(--text);font-size:18px; }
+    .calc-grid button:hover { border-color:var(--accent); }
+    .calc-grid .op { color:var(--accent-2); font-weight:800; }
+    .calc-grid .equals { color:white;background:linear-gradient(135deg,var(--accent),var(--accent-2));border:0; }
+    .grade-result { text-align:center; padding:24px; border-radius:18px; background:var(--panel-2); margin-top:18px; }
+    .grade-result strong { display:block;font-size:44px;color:var(--accent-2); }
+    .timer-wrap { text-align:center; }
+    .timer-ring { width:240px;height:240px;border-radius:50%;display:grid;place-items:center;margin:20px auto 28px;background:conic-gradient(var(--accent) var(--progress, 100%), var(--panel-2) 0); position:relative; }
+    .timer-ring::after { content:"";position:absolute;inset:12px;border-radius:50%;background:var(--panel-solid); }
+    .timer-time { position:relative;z-index:1;font-size:52px;font-weight:800;letter-spacing:-2px; }
+    .timer-mode { position:relative;z-index:1;color:var(--muted);font-size:13px; }
+    .timer-actions { display:flex;justify-content:center;gap:10px;flex-wrap:wrap; }
+    .settings-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px; }
+    .colors { display:flex; gap:12px; flex-wrap:wrap; }
+    .color { width:37px;height:37px;border:3px solid transparent;border-radius:50%; }
+    .color.active { border-color:var(--text); }
+    .modal { position:fixed; inset:0; z-index:100; display:none; place-items:center; padding:18px; background:rgba(0,0,0,.62); backdrop-filter:blur(8px); }
+    .modal.open { display:grid; }
+    .modal-box { width:min(520px,100%); background:var(--panel-solid); border:1px solid var(--border); border-radius:22px; padding:22px; box-shadow:var(--shadow); }
+    .modal-actions { display:flex;justify-content:flex-end;gap:10px;margin-top:17px; }
+    .toast { position:fixed;right:22px;bottom:22px;z-index:200;padding:13px 17px;border-radius:13px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow); transform:translateY(90px);opacity:0;transition:.25s; }
+    .toast.show { transform:none;opacity:1; }
+    .footer { color:var(--muted);text-align:center;font-size:12px;margin-top:34px; }
+    @media (max-width: 1000px) {
+      .stats { grid-template-columns:repeat(2,1fr); }
+      .link-grid { grid-template-columns:repeat(2,1fr); }
+      .grid-2 { grid-template-columns:1fr; }
+    }
+    @media (max-width: 760px) {
+      .app { grid-template-columns:1fr; }
+      .sidebar { position:fixed; left:-280px; width:260px; transition:.24s; box-shadow:var(--shadow); }
+      .sidebar.open { left:0; }
+      .mobile-menu { display:inline-flex; }
+      .main { padding:18px 15px 45px; }
+      .topbar { align-items:flex-start; }
+      .greeting h1 { font-size:28px; }
+      .link-grid, .settings-grid, .notes-layout { grid-template-columns:1fr; }
+      .note-list { max-height:230px; }
+      .section-title { align-items:stretch; flex-direction:column; }
+      .search { min-width:0; }
+    }
+    @media (max-width: 500px) {
+      .stats, .quick-grid, .tools-grid, .form-row { grid-template-columns:1fr; }
+      .top-actions .btn-label { display:none; }
+      .timer-ring { width:210px;height:210px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><div class="brand-logo">🎓</div><div><strong>School Hub</strong><small>Study smarter</small></div></div>
+      <nav class="nav">
+        <button class="nav-btn active" data-page="dashboard">🏠 Dashboard</button>
+        <button class="nav-btn" data-page="links">🔗 Saved Links</button>
+        <button class="nav-btn" data-page="calculator">🧮 Calculator</button>
+        <button class="nav-btn" data-page="notes">📝 Notes</button>
+        <button class="nav-btn" data-page="grades">🎓 Grade Calculator</button>
+        <button class="nav-btn" data-page="timer">⏱️ Focus Timer</button>
+        <button class="nav-btn" data-page="settings">⚙️ Settings</button>
+      </nav>
+      <div class="sidebar-bottom"><div class="storage-note">🔒 Your information stays in this browser using local storage.</div></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display:flex;gap:12px;align-items:center">
+          <button class="icon-btn mobile-menu" id="menuBtn" aria-label="Open menu">☰</button>
+          <div class="greeting"><h1 id="pageHeading">Welcome back 👋</h1><p id="todayText"></p></div>
+        </div>
+        <div class="top-actions"><button class="icon-btn" id="themeBtn" aria-label="Toggle theme">☀️</button><button class="btn primary" id="quickAdd"><span>＋</span><span class="btn-label">Add Link</span></button></div>
+      </header>
+
+      <section class="page active" id="dashboard">
+        <div class="stats">
+          <div class="stat"><div class="stat-icon">🔗</div><strong id="linkCount">0</strong><span>Saved links</span></div>
+          <div class="stat"><div class="stat-icon">📝</div><strong id="noteCount">0</strong><span>Notes</span></div>
+          <div class="stat"><div class="stat-icon">🔥</div><strong id="sessionCount">0</strong><span>Focus sessions</span></div>
+          <div class="stat"><div class="stat-icon">⏳</div><strong id="focusMinutes">0</strong><span>Minutes focused</span></div>
+        </div>
+        <div class="grid-2">
+          <div class="card"><div class="card-head"><h2>Favorite links</h2><button class="btn" data-go="links">View all</button></div><div class="quick-grid" id="favoriteLinks"></div></div>
+          <div class="card"><div class="card-head"><h2>Quick tools</h2></div><div class="tools-grid">
+            <button class="btn" data-go="calculator">🧮 Calculator</button><button class="btn" data-go="notes">📝 New note</button><button class="btn" data-go="grades">🎓 Grades</button><button class="btn" data-go="timer">⏱️ Focus</button>
+          </div></div>
+        </div>
+      </section>
+
+      <section class="page" id="links">
+        <div class="section-title"><div><h2>Saved Links</h2><p>Keep every school website in one place.</p></div><div class="search"><span>⌕</span><input id="linkSearch" placeholder="Search links..." /></div></div>
+        <div class="link-grid" id="linkGrid"></div>
+      </section>
+
+      <section class="page" id="calculator">
+        <div class="section-title"><div><h2>Calculator</h2><p>Fast calculations without leaving your hub.</p></div></div>
+        <div class="card calc">
+          <div class="calc-display" id="calcDisplay">0</div><div class="calc-history" id="calcHistory">Ready</div>
+          <div class="calc-grid" id="calcKeys">
+            <button data-key="clear" class="op">AC</button><button data-key="back" class="op">⌫</button><button data-key="(" class="op">(</button><button data-key=")" class="op">)</button>
+            <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button><button data-key="/" class="op">÷</button>
+            <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button><button data-key="*" class="op">×</button>
+            <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button><button data-key="-" class="op">−</button>
+            <button data-key="0">0</button><button data-key=".">.</button><button data-key="%">%</button><button data-key="+" class="op">+</button>
+            <button data-key="sqrt" class="op">√</button><button data-key="square" class="op">x²</button><button data-key="negate" class="op">±</button><button data-key="=" class="equals">=</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="notes">
+        <div class="section-title"><div><h2>Notes</h2><p>Notes save automatically as you type.</p></div><button class="btn primary" id="newNote">＋ New Note</button></div>
+        <div class="notes-layout">
+          <div class="card"><div class="note-list" id="noteList"></div></div>
+          <div class="card"><input id="noteTitle" placeholder="Note title" style="font-size:22px;font-weight:700;margin-bottom:12px" /><textarea id="noteBody" placeholder="Start typing your notes..."></textarea><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:12px"><small id="saveState" style="color:var(--muted)">Saved</small><button class="btn danger" id="deleteNote">Delete note</button></div></div>
+        </div>
+      </section>
+
+      <section class="page" id="grades">
+        <div class="section-title"><div><h2>Grade Calculator</h2><p>See your current grade or what you need on a final.</p></div></div>
+        <div class="grid-2">
+          <div class="card"><h3 style="margin-bottom:18px">Current grade</h3><div class="form-row"><div><label>Points earned</label><input type="number" id="earned" min="0" placeholder="420" /></div><div><label>Points possible</label><input type="number" id="possible" min="0" placeholder="500" /></div></div><button class="btn primary" id="calcGrade" style="margin-top:14px;width:100%">Calculate grade</button><div class="grade-result"><span>Your grade</span><strong id="gradeOutput">--</strong><small id="letterOutput">Enter your points</small></div></div>
+          <div class="card"><h3 style="margin-bottom:18px">Final exam target</h3><div><label>Current grade (%)</label><input type="number" id="currentGrade" placeholder="84" /></div><div style="margin-top:12px"><label>Final exam weight (%)</label><input type="number" id="finalWeight" placeholder="20" /></div><div style="margin-top:12px"><label>Desired overall grade (%)</label><input type="number" id="desiredGrade" placeholder="90" /></div><button class="btn primary" id="calcNeeded" style="margin-top:14px;width:100%">Calculate needed score</button><div class="grade-result"><span>Needed on final</span><strong id="neededOutput">--</strong><small id="neededMessage">Enter your class details</small></div></div>
+        </div>
+      </section>
+
+      <section class="page" id="timer">
+        <div class="section-title"><div><h2>Focus Timer</h2><p>Stay locked in, then take a real break.</p></div></div>
+        <div class="card timer-wrap">
+          <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap"><button class="btn timer-preset primary" data-minutes="25" data-label="Focus">25 min</button><button class="btn timer-preset" data-minutes="5" data-label="Short break">5 min break</button><button class="btn timer-preset" data-minutes="15" data-label="Long break">15 min break</button></div>
+          <div class="timer-ring" id="timerRing"><div><div class="timer-time" id="timerTime">25:00</div><div class="timer-mode" id="timerMode">Focus</div></div></div>
+          <div class="timer-actions"><button class="btn primary" id="timerStart">▶ Start</button><button class="btn" id="timerReset">↻ Reset</button></div>
+        </div>
+      </section>
+
+      <section class="page" id="settings">
+        <div class="section-title"><div><h2>Settings</h2><p>Make School Hub feel like yours.</p></div></div>
+        <div class="settings-grid">
+          <div class="card"><h3 style="margin-bottom:17px">Profile</h3><label>Your name</label><input id="studentName" placeholder="Student" /><button class="btn primary" id="saveProfile" style="margin-top:13px">Save profile</button></div>
+          <div class="card"><h3 style="margin-bottom:17px">Accent color</h3><div class="colors" id="colors"><button class="color" style="background:#7c3aed" data-color="#7c3aed" data-color2="#a855f7" aria-label="Purple"></button><button class="color" style="background:#2563eb" data-color="#2563eb" data-color2="#06b6d4" aria-label="Blue"></button><button class="color" style="background:#059669" data-color="#059669" data-color2="#22c55e" aria-label="Green"></button><button class="color" style="background:#e11d48" data-color="#e11d48" data-color2="#f97316" aria-label="Pink"></button><button class="color" style="background:#ea580c" data-color="#ea580c" data-color2="#facc15" aria-label="Orange"></button></div></div>
+          <div class="card"><h3 style="margin-bottom:10px">Backup</h3><p style="color:var(--muted)">Export everything to a JSON file or import a previous backup.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="exportData">Export data</button><label class="btn" style="margin:0">Import data<input type="file" id="importData" accept="application/json" hidden /></label></div></div>
+          <div class="card"><h3 style="margin-bottom:10px">Danger zone</h3><p style="color:var(--muted)">Delete all saved links, notes, settings, and focus history.</p><button class="btn danger" id="clearData">Clear all data</button></div>
+        </div>
+      </section>
+      <div class="footer">School Hub • Local-first and Vercel-ready</div>
+    </main>
+  </div>
+
+  <div class="modal" id="linkModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-box"><div class="card-head"><h2 id="modalTitle">Add a link</h2><button class="icon-btn" id="closeModal">✕</button></div>
+      <input type="hidden" id="editLinkId" />
+      <div><label>Link name</label><input id="linkName" placeholder="Google Classroom" /></div>
+      <div style="margin-top:12px"><label>Website URL</label><input id="linkUrl" placeholder="https://classroom.google.com" /></div>
+      <div style="margin-top:12px"><label>Category</label><select id="linkCategory"><option>School</option><option>Study</option><option>Research</option><option>Tools</option><option>Other</option></select></div>
+      <div class="modal-actions"><button class="btn" id="cancelModal">Cancel</button><button class="btn primary" id="saveLink">Save link</button></div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORE_KEY = 'schoolHubDataV1';
+    const defaults = {
+      links: [
+        {id: crypto.randomUUID(), name:'Google Classroom', url:'https://classroom.google.com', category:'School', favorite:true},
+        {id: crypto.randomUUID(), name:'Khan Academy', url:'https://www.khanacademy.org', category:'Study', favorite:true},
+        {id: crypto.randomUUID(), name:'Desmos', url:'https://www.desmos.com/calculator', category:'Tools', favorite:false}
+      ],
+      notes: [{id: crypto.randomUUID(), title:'Welcome to School Hub', body:'Use this space for assignments, study notes, reminders, and ideas.', updated:Date.now()}],
+      profile: {name:'Student', theme:'dark', accent:'#7c3aed', accent2:'#a855f7'},
+      stats: {sessions:0, focusMinutes:0}
+    };
+    let data = loadData();
+    let activeNoteId = data.notes[0]?.id || null;
+    let timer = {total:1500, left:1500, running:false, interval:null, label:'Focus'};
+    let calcExpression = '';
+
+    function loadData(){
+      try { const saved = JSON.parse(localStorage.getItem(STORE_KEY)); return saved ? {...defaults,...saved,profile:{...defaults.profile,...saved.profile},stats:{...defaults.stats,...saved.stats}} : structuredClone(defaults); }
+      catch { return structuredClone(defaults); }
+    }
+    function saveData(){ localStorage.setItem(STORE_KEY, JSON.stringify(data)); updateStats(); }
+    function toast(message){ const el=document.getElementById('toast'); el.textContent=message; el.classList.add('show'); clearTimeout(el.t); el.t=setTimeout(()=>el.classList.remove('show'),2200); }
+    function escapeHTML(value=''){ return value.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+    function normalizeUrl(url){ if(!/^https?:\/\//i.test(url)) url='https://'+url; return url; }
+    function niceHost(url){ try{return new URL(url).hostname.replace(/^www\./,'')}catch{return url} }
+
+    function goTo(page){
+      document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page));
+      document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+      const titles={dashboard:`Welcome back, ${data.profile.name || 'Student'} 👋`,links:'Saved Links',calculator:'Calculator',notes:'Notes',grades:'Grade Calculator',timer:'Focus Timer',settings:'Settings'};
+      document.getElementById('pageHeading').textContent=titles[page];
+      document.getElementById('sidebar').classList.remove('open');
+      if(page==='notes') renderNotes();
+    }
+    document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>goTo(b.dataset.page)));
+    document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>goTo(b.dataset.go)));
+    document.getElementById('menuBtn').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+
+    function applyTheme(){
+      document.body.classList.toggle('light',data.profile.theme==='light');
+      document.documentElement.style.setProperty('--accent',data.profile.accent);
+      document.documentElement.style.setProperty('--accent-2',data.profile.accent2);
+      document.getElementById('themeBtn').textContent=data.profile.theme==='light'?'🌙':'☀️';
+      document.querySelectorAll('.color').forEach(c=>c.classList.toggle('active',c.dataset.color===data.profile.accent));
+    }
+    document.getElementById('themeBtn').onclick=()=>{data.profile.theme=data.profile.theme==='light'?'dark':'light';applyTheme();saveData();};
+
+    function renderLinks(filter=''){
+      const grid=document.getElementById('linkGrid');
+      const list=data.links.filter(l=>(l.name+' '+l.url+' '+l.category).toLowerCase().includes(filter.toLowerCase())).sort((a,b)=>b.favorite-a.favorite);
+      grid.innerHTML=list.length?list.map(l=>`<article class="link-card"><button class="fav ${l.favorite?'on':''}" onclick="toggleFavorite('${l.id}')">★</button><div class="link-icon">${l.category==='School'?'🏫':l.category==='Study'?'📚':l.category==='Research'?'🔎':l.category==='Tools'?'🛠️':'🌐'}</div><h3>${escapeHTML(l.name)}</h3><p>${escapeHTML(l.category)} • ${escapeHTML(niceHost(l.url))}</p><a href="${escapeHTML(l.url)}" target="_blank" rel="noopener noreferrer">Open website ↗</a><div class="card-menu"><button onclick="editLink('${l.id}')">Edit</button><button onclick="deleteLink('${l.id}')">Delete</button></div></article>`).join(''):'<div class="empty" style="grid-column:1/-1">No links found. Add your first one!</div>';
+      renderFavorites(); updateStats();
+    }
+    function renderFavorites(){
+      const box=document.getElementById('favoriteLinks'); const favs=data.links.filter(l=>l.favorite).slice(0,6);
+      box.innerHTML=favs.length?favs.map(l=>`<a class="quick-link" href="${escapeHTML(l.url)}" target="_blank" rel="noopener noreferrer"><div class="link-icon">🔗</div><div style="min-width:0"><strong>${escapeHTML(l.name)}</strong><small>${escapeHTML(niceHost(l.url))}</small></div></a>`).join(''):'<div class="empty" style="grid-column:1/-1">Star a saved link to see it here.</div>';
+    }
+    function openLinkModal(link=null){
+      document.getElementById('modalTitle').textContent=link?'Edit link':'Add a link';
+      document.getElementById('editLinkId').value=link?.id||''; document.getElementById('linkName').value=link?.name||''; document.getElementById('linkUrl').value=link?.url||''; document.getElementById('linkCategory').value=link?.category||'School';
+      document.getElementById('linkModal').classList.add('open'); setTimeout(()=>document.getElementById('linkName').focus(),50);
+    }
+    function closeLinkModal(){document.getElementById('linkModal').classList.remove('open')}
+    window.toggleFavorite=id=>{const l=data.links.find(x=>x.id===id);if(l)l.favorite=!l.favorite;saveData();renderLinks(document.getElementById('linkSearch').value)};
+    window.editLink=id=>openLinkModal(data.links.find(x=>x.id===id));
+    window.deleteLink=id=>{if(confirm('Delete this link?')){data.links=data.links.filter(x=>x.id!==id);saveData();renderLinks();toast('Link deleted')}};
+    document.getElementById('quickAdd').onclick=()=>openLinkModal(); document.getElementById('closeModal').onclick=closeLinkModal; document.getElementById('cancelModal').onclick=closeLinkModal;
+    document.getElementById('linkModal').addEventListener('click',e=>{if(e.target.id==='linkModal')closeLinkModal()});
+    document.getElementById('saveLink').onclick=()=>{
+      const id=document.getElementById('editLinkId').value, name=document.getElementById('linkName').value.trim(), raw=document.getElementById('linkUrl').value.trim(), category=document.getElementById('linkCategory').value;
+      if(!name||!raw)return toast('Enter a name and URL'); let url=normalizeUrl(raw); try{new URL(url)}catch{return toast('Enter a valid URL')}
+      if(id){const l=data.links.find(x=>x.id===id);Object.assign(l,{name,url,category});}else data.links.push({id:crypto.randomUUID(),name,url,category,favorite:false});
+      saveData();renderLinks();closeLinkModal();toast(id?'Link updated':'Link added');
+    };
+    document.getElementById('linkSearch').addEventListener('input',e=>renderLinks(e.target.value));
+
+    function renderNotes(){
+      if(!data.notes.length){const n={id:crypto.randomUUID(),title:'Untitled note',body:'',updated:Date.now()};data.notes.push(n);activeNoteId=n.id;saveData();}
+      if(!data.notes.some(n=>n.id===activeNoteId))activeNoteId=data.notes[0].id;
+      const sorted=[...data.notes].sort((a,b)=>b.updated-a.updated);
+      document.getElementById('noteList').innerHTML=sorted.map(n=>`<button class="note-item ${n.id===activeNoteId?'active':''}" data-note="${n.id}"><strong>${escapeHTML(n.title||'Untitled note')}</strong><small>${new Date(n.updated).toLocaleDateString()}</small></button>`).join('');
+      document.querySelectorAll('[data-note]').forEach(b=>b.onclick=()=>{activeNoteId=b.dataset.note;renderNotes()});
+      const current=data.notes.find(n=>n.id===activeNoteId); document.getElementById('noteTitle').value=current?.title||'';document.getElementById('noteBody').value=current?.body||'';
+      updateStats();
+    }
+    function updateCurrentNote(){const n=data.notes.find(n=>n.id===activeNoteId);if(!n)return;n.title=document.getElementById('noteTitle').value;n.body=document.getElementById('noteBody').value;n.updated=Date.now();document.getElementById('saveState').textContent='Saving...';clearTimeout(updateCurrentNote.t);updateCurrentNote.t=setTimeout(()=>{saveData();renderNotes();document.getElementById('saveState').textContent='Saved'},350)}
+    document.getElementById('noteTitle').addEventListener('input',updateCurrentNote);document.getElementById('noteBody').addEventListener('input',updateCurrentNote);
+    document.getElementById('newNote').onclick=()=>{const n={id:crypto.randomUUID(),title:'Untitled note',body:'',updated:Date.now()};data.notes.push(n);activeNoteId=n.id;saveData();renderNotes();document.getElementById('noteTitle').select()};
+    document.getElementById('deleteNote').onclick=()=>{if(confirm('Delete this note?')){data.notes=data.notes.filter(n=>n.id!==activeNoteId);activeNoteId=data.notes[0]?.id||null;saveData();renderNotes();toast('Note deleted')}};
+
+    function updateCalc(){document.getElementById('calcDisplay').textContent=calcExpression.replace(/\*/g,'×').replace(/\//g,'÷')||'0'}
+    document.getElementById('calcKeys').onclick=e=>{const key=e.target.dataset.key;if(!key)return;if(key==='clear')calcExpression='';else if(key==='back')calcExpression=calcExpression.slice(0,-1);else if(key==='sqrt'){try{calcExpression=String(Math.sqrt(safeEval(calcExpression||'0')))}catch{calcError()}}else if(key==='square'){try{const n=safeEval(calcExpression||'0');calcExpression=String(n*n)}catch{calcError()}}else if(key==='negate'){try{calcExpression=String(-safeEval(calcExpression||'0'))}catch{calcError()}}else if(key==='='){try{const old=calcExpression;calcExpression=String(safeEval(calcExpression));document.getElementById('calcHistory').textContent=old+' = '+calcExpression}catch{calcError()}}else calcExpression+=key;updateCalc()};
+    function safeEval(exp){if(!exp||!/^[0-9+\-*/().%\s]+$/.test(exp))throw Error();const normalized=exp.replace(/(\d+(?:\.\d+)?)%/g,'($1/100)');const value=Function('"use strict"; return ('+normalized+')')();if(!Number.isFinite(value))throw Error();return Math.round((value+Number.EPSILON)*1e10)/1e10}
+    function calcError(){document.getElementById('calcHistory').textContent='Invalid calculation';calcExpression='';}
+
+    function letter(p){return p>=90?'A':p>=80?'B':p>=70?'C':p>=60?'D':'F'}
+    document.getElementById('calcGrade').onclick=()=>{const e=+document.getElementById('earned').value,p=+document.getElementById('possible').value;if(p<=0||e<0)return toast('Enter valid point values');const g=e/p*100;document.getElementById('gradeOutput').textContent=g.toFixed(1)+'%';document.getElementById('letterOutput').textContent='Letter grade: '+letter(g)};
+    document.getElementById('calcNeeded').onclick=()=>{const current=+document.getElementById('currentGrade').value,weight=+document.getElementById('finalWeight').value,desired=+document.getElementById('desiredGrade').value;if(weight<=0||weight>100)return toast('Final weight must be 1–100');const needed=(desired-current*(1-weight/100))/(weight/100);document.getElementById('neededOutput').textContent=needed.toFixed(1)+'%';document.getElementById('neededMessage').textContent=needed>100?'That target may not be possible with this final alone.':needed<=0?'You have already secured that target.':'Score this or higher to reach your goal.'};
+
+    function setTimer(minutes,label){clearInterval(timer.interval);timer={total:minutes*60,left:minutes*60,running:false,interval:null,label};document.querySelectorAll('.timer-preset').forEach(b=>b.classList.toggle('primary',+b.dataset.minutes===minutes));updateTimer()}
+    function updateTimer(){const m=Math.floor(timer.left/60),s=timer.left%60;document.getElementById('timerTime').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;document.getElementById('timerMode').textContent=timer.label;document.getElementById('timerRing').style.setProperty('--progress',`${timer.total?timer.left/timer.total*100:0}%`);document.getElementById('timerStart').textContent=timer.running?'⏸ Pause':'▶ Start';document.title=`${m}:${String(s).padStart(2,'0')} • School Hub`}
+    document.querySelectorAll('.timer-preset').forEach(b=>b.onclick=()=>setTimer(+b.dataset.minutes,b.dataset.label));
+    document.getElementById('timerStart').onclick=()=>{timer.running=!timer.running;if(timer.running){timer.interval=setInterval(()=>{timer.left--;if(timer.left<=0){clearInterval(timer.interval);timer.running=false;timer.left=0;if(timer.label==='Focus'){data.stats.sessions++;data.stats.focusMinutes+=Math.round(timer.total/60);saveData()}toast(timer.label==='Focus'?'Focus session complete!':'Break complete!');try{new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVYGAAAA').play()}catch{} }updateTimer()},1000)}else clearInterval(timer.interval);updateTimer()};
+    document.getElementById('timerReset').onclick=()=>{clearInterval(timer.interval);timer.left=timer.total;timer.running=false;updateTimer()};
+
+    function updateStats(){document.getElementById('linkCount').textContent=data.links.length;document.getElementById('noteCount').textContent=data.notes.length;document.getElementById('sessionCount').textContent=data.stats.sessions;document.getElementById('focusMinutes').textContent=data.stats.focusMinutes}
+    document.getElementById('studentName').value=data.profile.name;
+    document.getElementById('saveProfile').onclick=()=>{data.profile.name=document.getElementById('studentName').value.trim()||'Student';saveData();goTo('settings');toast('Profile saved')};
+    document.getElementById('colors').onclick=e=>{const b=e.target.closest('[data-color]');if(!b)return;data.profile.accent=b.dataset.color;data.profile.accent2=b.dataset.color2;applyTheme();saveData()};
+    document.getElementById('exportData').onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='school-hub-backup.json';a.click();URL.revokeObjectURL(a.href);toast('Backup exported')};
+    document.getElementById('importData').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const next=JSON.parse(await file.text());if(!next.links||!next.notes)throw Error();data={...defaults,...next,profile:{...defaults.profile,...next.profile},stats:{...defaults.stats,...next.stats}};saveData();location.reload()}catch{toast('That backup file is not valid')}};
+    document.getElementById('clearData').onclick=()=>{if(confirm('Clear ALL School Hub data? This cannot be undone.')){localStorage.removeItem(STORE_KEY);location.reload()}};
+
+    document.getElementById('todayText').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+    applyTheme();renderLinks();renderNotes();updateStats();updateTimer();goTo('dashboard');
+  </script>
+</body>
+</html>
