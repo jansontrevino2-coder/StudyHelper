@@ -137,6 +137,12 @@
     .fav.on { color:var(--warning); }
     .card-menu { display:flex; gap:8px; margin-top:17px; }
     .card-menu button { flex:1; border:1px solid var(--border);border-radius:11px;padding:8px;color:var(--muted);background:var(--panel-2); }
+    .schedule-list { display:grid; gap:10px; }
+    .schedule-item { display:grid; grid-template-columns:88px 1fr auto; gap:14px; align-items:center; padding:14px; border:1px solid var(--border); border-radius:12px; background:var(--panel-2); }
+    .schedule-time { color:var(--accent-2); font-weight:800; font-size:13px; }
+    .schedule-item strong { display:block; }
+    .schedule-item small { color:var(--muted); }
+    .schedule-day { margin-top:18px; margin-bottom:9px; color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
     .notes-layout { display:grid; grid-template-columns:280px minmax(0,1fr); gap:18px; }
     .note-list { display:grid; gap:9px; max-height:590px; overflow:auto; }
     .note-item { border:1px solid var(--border);background:var(--panel-2);border-radius:13px;padding:12px;text-align:left;color:var(--text); }
@@ -212,6 +218,7 @@
       <nav class="nav">
         <button class="nav-btn active" data-page="dashboard">Dashboard</button>
         <button class="nav-btn" data-page="links">Saved Links</button>
+        <button class="nav-btn" data-page="schedule">Schedule</button>
         <button class="nav-btn" data-page="calculator">Calculator</button>
         <button class="nav-btn" data-page="notes">Notes</button>
         <button class="nav-btn" data-page="grades">Grade Calculator</button>
@@ -250,6 +257,11 @@
         <div class="link-grid" id="linkGrid"></div>
       </section>
 
+      <section class="page" id="schedule">
+        <div class="section-title"><div><h2>Schedule</h2><p>Add classes and organize your weekly school schedule.</p></div><button class="btn primary" id="addScheduleBtn">＋ Add Class</button></div>
+        <div class="card"><div class="schedule-list" id="scheduleList"></div></div>
+      </section>
+
       <section class="page" id="calculator">
         <div class="section-title"><div><h2>Calculator</h2><p>Fast calculations without leaving your hub.</p></div></div>
         <div class="card calc">
@@ -274,7 +286,7 @@
       </section>
 
       <section class="page" id="grades">
-        <div class="section-title"><div><h2>Grade Calculator</h2><p>See your current grade or what you need on a final.</p></div></div>
+        <div class="section-title"><div><h2>Grade Calculator</h2><p>See your current grade.</p></div></div>
         <div class="grid-2">
           <div class="card"><h3 style="margin-bottom:18px">Current grade</h3><div class="form-row"><div><label>Points earned</label><input type="number" id="earned" min="0" placeholder="420" /></div><div><label>Points possible</label><input type="number" id="possible" min="0" placeholder="500" /></div></div><button class="btn primary" id="calcGrade" style="margin-top:14px;width:100%">Calculate grade</button><div class="grade-result"><span>Your grade</span><strong id="gradeOutput">--</strong><small id="letterOutput">Enter your points</small></div></div>
           <div class="card"><h3 style="margin-bottom:18px">Final exam target</h3><div><label>Current grade (%)</label><input type="number" id="currentGrade" placeholder="84" /></div><div style="margin-top:12px"><label>Final exam weight (%)</label><input type="number" id="finalWeight" placeholder="20" /></div><div style="margin-top:12px"><label>Desired overall grade (%)</label><input type="number" id="desiredGrade" placeholder="90" /></div><button class="btn primary" id="calcNeeded" style="margin-top:14px;width:100%">Calculate needed score</button><div class="grade-result"><span>Needed on final</span><strong id="neededOutput">--</strong><small id="neededMessage">Enter your class details</small></div></div>
@@ -291,7 +303,7 @@
       </section>
 
       <section class="page" id="settings">
-        <div class="section-title"><div><h2>Settings</h2><p>Customize your hub.</p></div></div>
+        <div class="section-title"><div><h2>Settings</h2><p>Customize you're hub.</p></div></div>
         <div class="settings-grid">
           <div class="card"><h3 style="margin-bottom:17px">Profile</h3><label>Your name</label><input id="studentName" placeholder="Student" /><button class="btn primary" id="saveProfile" style="margin-top:13px">Save profile</button></div>
           <div class="card"><h3 style="margin-bottom:17px">Accent color</h3><div class="colors" id="colors"><button class="color" style="background:#1d4ed8" data-color="#1d4ed8" data-color2="#2563eb" aria-label="Purple"></button><button class="color" style="background:#2563eb" data-color="#2563eb" data-color2="#06b6d4" aria-label="Blue"></button><button class="color" style="background:#059669" data-color="#059669" data-color2="#22c55e" aria-label="Green"></button><button class="color" style="background:#e11d48" data-color="#e11d48" data-color2="#f97316" aria-label="Pink"></button><button class="color" style="background:#ea580c" data-color="#ea580c" data-color2="#facc15" aria-label="Orange"></button></div></div>
@@ -314,6 +326,17 @@
       <div class="modal-actions"><button class="btn" id="cancelModal">Cancel</button><button class="btn primary" id="saveLink">Save link</button></div>
     </div>
   </div>
+  <div class="modal" id="scheduleModal" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle">
+    <div class="modal-box"><div class="card-head"><h2 id="scheduleModalTitle">Add class</h2><button class="icon-btn" id="closeScheduleModal">✕</button></div>
+      <input type="hidden" id="editScheduleId" />
+      <div><label>Class name</label><input id="scheduleName" placeholder="Algebra II" /></div>
+      <div class="form-row" style="margin-top:12px"><div><label>Day</label><select id="scheduleDay"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></div><div><label>Subject</label><select id="scheduleSubject"></select></div></div>
+      <div class="form-row" style="margin-top:12px"><div><label>Start time</label><input type="time" id="scheduleStart" /></div><div><label>End time</label><input type="time" id="scheduleEnd" /></div></div>
+      <div style="margin-top:12px"><label>Room / location</label><input id="scheduleRoom" placeholder="Room 204" /></div>
+      <div class="modal-actions"><button class="btn" id="cancelScheduleModal">Cancel</button><button class="btn primary" id="saveSchedule">Save class</button></div>
+    </div>
+  </div>
+
   <div class="modal" id="tutorialModal" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
     <div class="modal-box">
       <div class="card-head"><div><div class="tutorial-step-label" id="tutorialStepLabel">Step 1 of 6</div><h2 id="tutorialTitle" style="margin-top:5px">Welcome to School Hub</h2></div><button class="icon-btn" id="closeTutorial">✕</button></div>
@@ -329,6 +352,7 @@
     const STORE_KEY = 'schoolHubDataV1';
     const defaults = {
       links: [],
+      schedule: [],
       subjects: ['General','Mathematics','Science','English','History','Languages','Computer Science'],
       notes: [{id: crypto.randomUUID(), title:'Welcome to School Hub', body:'Use this space for assignments, study notes, reminders, and ideas.', updated:Date.now()}],
       profile: {name:'Student', theme:'dark', accent:'#1d4ed8', accent2:'#2563eb'},
@@ -352,7 +376,7 @@
     function goTo(page){
       document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page));
       document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
-      const titles={dashboard:`Welcome back, ${data.profile.name || 'Student'}`,links:'Saved Links',calculator:'Calculator',notes:'Notes',grades:'Grade Calculator',timer:'Focus Timer',settings:'Settings'};
+      const titles={schedule:'Schedule',dashboard:`Welcome back, ${data.profile.name || 'Student'}`,links:'Saved Links',calculator:'Calculator',notes:'Notes',grades:'Grade Calculator',timer:'Focus Timer',settings:'Settings'};
       document.getElementById('pageHeading').textContent=titles[page];
       document.getElementById('sidebar').classList.remove('open');
       if(page==='notes') renderNotes();
@@ -435,6 +459,39 @@
     document.getElementById('newNote').onclick=()=>{const n={id:crypto.randomUUID(),title:'Untitled note',body:'',updated:Date.now()};data.notes.push(n);activeNoteId=n.id;saveData();renderNotes();document.getElementById('noteTitle').select()};
     document.getElementById('deleteNote').onclick=()=>{if(confirm('Delete this note?')){data.notes=data.notes.filter(n=>n.id!==activeNoteId);activeNoteId=data.notes[0]?.id||null;saveData();renderNotes();toast('Note deleted')}};
 
+    const scheduleDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    function timeLabel(value){ if(!value)return ''; const [h,m]=value.split(':').map(Number); const suffix=h>=12?'PM':'AM'; return `${h%12||12}:${String(m).padStart(2,'0')} ${suffix}`; }
+    function renderSchedule(){
+      const box=document.getElementById('scheduleList');
+      if(!data.schedule?.length){box.innerHTML='<div class="empty">No classes added yet. Select Add Class to build your schedule.</div>';return;}
+      box.innerHTML=scheduleDays.map(day=>{
+        const items=data.schedule.filter(x=>x.day===day).sort((a,b)=>a.start.localeCompare(b.start));
+        if(!items.length)return '';
+        return `<div class="schedule-day">${day}</div>`+items.map(x=>`<div class="schedule-item"><div class="schedule-time">${timeLabel(x.start)}<br>${timeLabel(x.end)}</div><div><strong>${escapeHTML(x.name)}</strong><small>${escapeHTML(x.subject||'General')}${x.room?' • '+escapeHTML(x.room):''}</small></div><div class="card-menu"><button onclick="editSchedule('${x.id}')">Edit</button><button onclick="deleteSchedule('${x.id}')">Delete</button></div></div>`).join('');
+      }).join('');
+    }
+    function openScheduleModal(item=null){
+      document.getElementById('scheduleModalTitle').textContent=item?'Edit class':'Add class';
+      document.getElementById('editScheduleId').value=item?.id||'';
+      document.getElementById('scheduleName').value=item?.name||'';
+      document.getElementById('scheduleDay').value=item?.day||'Monday';
+      const subject=document.getElementById('scheduleSubject'); subject.innerHTML=data.subjects.map(x=>`<option>${escapeHTML(x)}</option>`).join(''); subject.value=item?.subject||'General';
+      document.getElementById('scheduleStart').value=item?.start||''; document.getElementById('scheduleEnd').value=item?.end||''; document.getElementById('scheduleRoom').value=item?.room||'';
+      document.getElementById('scheduleModal').classList.add('open');
+    }
+    function closeScheduleModal(){document.getElementById('scheduleModal').classList.remove('open')}
+    window.editSchedule=id=>openScheduleModal(data.schedule.find(x=>x.id===id));
+    window.deleteSchedule=id=>{if(confirm('Delete this class from your schedule?')){data.schedule=data.schedule.filter(x=>x.id!==id);saveData();renderSchedule();toast('Class removed')}};
+    document.getElementById('addScheduleBtn').onclick=()=>openScheduleModal();
+    document.getElementById('closeScheduleModal').onclick=closeScheduleModal; document.getElementById('cancelScheduleModal').onclick=closeScheduleModal;
+    document.getElementById('scheduleModal').addEventListener('click',e=>{if(e.target.id==='scheduleModal')closeScheduleModal()});
+    document.getElementById('saveSchedule').onclick=()=>{
+      const id=document.getElementById('editScheduleId').value, name=document.getElementById('scheduleName').value.trim(), day=document.getElementById('scheduleDay').value, subject=document.getElementById('scheduleSubject').value, start=document.getElementById('scheduleStart').value, end=document.getElementById('scheduleEnd').value, room=document.getElementById('scheduleRoom').value.trim();
+      if(!name||!start||!end)return toast('Enter a class name, start time, and end time'); if(end<=start)return toast('End time must be after start time');
+      const item={id:id||crypto.randomUUID(),name,day,subject,start,end,room}; if(id){const i=data.schedule.findIndex(x=>x.id===id);data.schedule[i]=item}else data.schedule.push(item);
+      saveData();renderSchedule();closeScheduleModal();toast(id?'Class updated':'Class added');
+    };
+
     function updateCalc(){document.getElementById('calcDisplay').textContent=calcExpression.replace(/\*/g,'×').replace(/\//g,'÷')||'0'}
     document.getElementById('calcKeys').onclick=e=>{const key=e.target.dataset.key;if(!key)return;if(key==='clear')calcExpression='';else if(key==='back')calcExpression=calcExpression.slice(0,-1);else if(key==='sqrt'){try{calcExpression=String(Math.sqrt(safeEval(calcExpression||'0')))}catch{calcError()}}else if(key==='square'){try{const n=safeEval(calcExpression||'0');calcExpression=String(n*n)}catch{calcError()}}else if(key==='negate'){try{calcExpression=String(-safeEval(calcExpression||'0'))}catch{calcError()}}else if(key==='='){try{const old=calcExpression;calcExpression=String(safeEval(calcExpression));document.getElementById('calcHistory').textContent=old+' = '+calcExpression}catch{calcError()}}else calcExpression+=key;updateCalc()};
     function safeEval(exp){if(!exp||!/^[0-9+\-*/().%\s]+$/.test(exp))throw Error();const normalized=exp.replace(/(\d+(?:\.\d+)?)%/g,'($1/100)');const value=Function('"use strict"; return ('+normalized+')')();if(!Number.isFinite(value))throw Error();return Math.round((value+Number.EPSILON)*1e10)/1e10}
@@ -464,9 +521,10 @@
       {icon:'SH',title:'Welcome to School Hub',copy:'This workspace keeps your academic links, notes, calculations, grades, and focus tools together in one organized dashboard.'},
       {icon:'01',title:'Organize links by subject',copy:'Open Saved Links to add websites and assign each one to a subject category. Use the subject filter or search field to find resources quickly.'},
       {icon:'02',title:'Manage subject categories',copy:'Open Settings to create your own subject categories. Categories can be used to organize the links you save.'},
-      {icon:'03',title:'Keep academic notes',copy:'The Notes section lets you create separate notes. Changes are saved automatically in this browser as you type.'},
-      {icon:'04',title:'Use the academic tools',copy:'Use the Calculator for everyday math, the Grade Calculator to check points and final-exam targets, and the Focus Timer for study sessions.'},
-      {icon:'05',title:'Backup your workspace',copy:'Your School Hub information is stored locally in this browser. Use the export option in Settings to save a backup that you can import later.'}
+      {icon:'03',title:'Build your weekly schedule',copy:'Open Schedule to add classes with a day, subject, start and end time, and room or location.'},
+      {icon:'04',title:'Keep academic notes',copy:'The Notes section lets you create separate notes. Changes are saved automatically in this browser as you type.'},
+      {icon:'05',title:'Use the academic tools',copy:'Use the Calculator for everyday math, the Grade Calculator to check points and final-exam targets, and the Focus Timer for study sessions.'},
+      {icon:'06',title:'Backup your workspace',copy:'Your School Hub information is stored locally in this browser. Use the export option in Settings to save a backup that you can import later.'}
     ];
     let tutorialIndex=0;
     function renderTutorial(){
@@ -488,7 +546,7 @@
     document.getElementById('tutorialModal').addEventListener('click',e=>{if(e.target.id==='tutorialModal')closeTutorial()});
 
     document.getElementById('todayText').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-    applyTheme();renderSubjectControls();renderLinks();renderNotes();updateStats();updateTimer();goTo('dashboard');
+    applyTheme();renderSubjectControls();renderLinks();renderNotes();renderSchedule();updateStats();updateTimer();goTo('dashboard');
     if(!localStorage.getItem('schoolHubTutorialSeen')) setTimeout(()=>openTutorial(true),250);
   </script>
 </body>
