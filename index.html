@@ -171,6 +171,12 @@
     .modal.open { display:grid; }
     .modal-box { width:min(520px,100%); background:var(--panel-solid); border:1px solid var(--border); border-radius:22px; padding:22px; box-shadow:var(--shadow); }
     .modal-actions { display:flex;justify-content:flex-end;gap:10px;margin-top:17px; }
+    .tutorial-progress { display:flex; gap:6px; margin:16px 0 20px; }
+    .tutorial-dot { height:4px; flex:1; border-radius:999px; background:var(--border); }
+    .tutorial-dot.active { background:var(--accent); }
+    .tutorial-step-label { color:var(--accent-2); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+    .tutorial-copy { color:var(--muted); line-height:1.65; min-height:78px; }
+    .tutorial-icon { width:54px;height:54px;display:grid;place-items:center;border-radius:14px;background:var(--accent-soft);color:var(--accent-2);font-weight:800;font-size:18px;margin-bottom:18px; }
     .toast { position:fixed;right:22px;bottom:22px;z-index:200;padding:13px 17px;border-radius:13px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow); transform:translateY(90px);opacity:0;transition:.25s; }
     .toast.show { transform:none;opacity:1; }
     .footer { color:var(--muted);text-align:center;font-size:12px;margin-top:34px; }
@@ -221,7 +227,7 @@
           <button class="icon-btn mobile-menu" id="menuBtn" aria-label="Open menu">☰</button>
           <div class="greeting"><h1 id="pageHeading">Welcome back</h1><p id="todayText"></p></div>
         </div>
-        <div class="top-actions"><button class="icon-btn" id="themeBtn" aria-label="Toggle theme">☀️</button><button class="btn primary" id="quickAdd"><span>＋</span><span class="btn-label">Add Link</span></button></div>
+        <div class="top-actions"><button class="btn" id="tutorialBtn"><span>?</span><span class="btn-label">Tutorial</span></button><button class="icon-btn" id="themeBtn" aria-label="Toggle theme">☀️</button><button class="btn primary" id="quickAdd"><span>＋</span><span class="btn-label">Add Link</span></button></div>
       </header>
 
       <section class="page active" id="dashboard">
@@ -306,6 +312,15 @@
       <div style="margin-top:12px"><label>Website URL</label><input id="linkUrl" placeholder="https://classroom.google.com" /></div>
       <div style="margin-top:12px"><label>Subject category</label><select id="linkCategory"></select></div>
       <div class="modal-actions"><button class="btn" id="cancelModal">Cancel</button><button class="btn primary" id="saveLink">Save link</button></div>
+    </div>
+  </div>
+  <div class="modal" id="tutorialModal" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
+    <div class="modal-box">
+      <div class="card-head"><div><div class="tutorial-step-label" id="tutorialStepLabel">Step 1 of 6</div><h2 id="tutorialTitle" style="margin-top:5px">Welcome to School Hub</h2></div><button class="icon-btn" id="closeTutorial">✕</button></div>
+      <div class="tutorial-progress" id="tutorialProgress"></div>
+      <div class="tutorial-icon" id="tutorialIcon">SH</div>
+      <p class="tutorial-copy" id="tutorialCopy"></p>
+      <div class="modal-actions"><button class="btn" id="tutorialBack">Back</button><button class="btn primary" id="tutorialNext">Next</button></div>
     </div>
   </div>
   <div class="toast" id="toast"></div>
@@ -445,8 +460,36 @@
     document.getElementById('importData').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const next=JSON.parse(await file.text());if(!next.links||!next.notes)throw Error();data={...defaults,...next,profile:{...defaults.profile,...next.profile},stats:{...defaults.stats,...next.stats}};saveData();location.reload()}catch{toast('That backup file is not valid')}};
     document.getElementById('clearData').onclick=()=>{if(confirm('Clear ALL School Hub data? This cannot be undone.')){localStorage.removeItem(STORE_KEY);location.reload()}};
 
+    const tutorialSteps=[
+      {icon:'SH',title:'Welcome to School Hub',copy:'This workspace keeps your academic links, notes, calculations, grades, and focus tools together in one organized dashboard.'},
+      {icon:'01',title:'Organize links by subject',copy:'Open Saved Links to add websites and assign each one to a subject category. Use the subject filter or search field to find resources quickly.'},
+      {icon:'02',title:'Manage subject categories',copy:'Open Settings to create your own subject categories. Categories can be used to organize the links you save.'},
+      {icon:'03',title:'Keep academic notes',copy:'The Notes section lets you create separate notes. Changes are saved automatically in this browser as you type.'},
+      {icon:'04',title:'Use the academic tools',copy:'Use the Calculator for everyday math, the Grade Calculator to check points and final-exam targets, and the Focus Timer for study sessions.'},
+      {icon:'05',title:'Backup your workspace',copy:'Your School Hub information is stored locally in this browser. Use the export option in Settings to save a backup that you can import later.'}
+    ];
+    let tutorialIndex=0;
+    function renderTutorial(){
+      const step=tutorialSteps[tutorialIndex];
+      document.getElementById('tutorialStepLabel').textContent=`Step ${tutorialIndex+1} of ${tutorialSteps.length}`;
+      document.getElementById('tutorialTitle').textContent=step.title;
+      document.getElementById('tutorialIcon').textContent=step.icon;
+      document.getElementById('tutorialCopy').textContent=step.copy;
+      document.getElementById('tutorialProgress').innerHTML=tutorialSteps.map((_,i)=>`<span class="tutorial-dot ${i<=tutorialIndex?'active':''}"></span>`).join('');
+      document.getElementById('tutorialBack').style.visibility=tutorialIndex===0?'hidden':'visible';
+      document.getElementById('tutorialNext').textContent=tutorialIndex===tutorialSteps.length-1?'Finish':'Next';
+    }
+    function openTutorial(reset=true){ if(reset)tutorialIndex=0; renderTutorial(); document.getElementById('tutorialModal').classList.add('open'); }
+    function closeTutorial(){ document.getElementById('tutorialModal').classList.remove('open'); localStorage.setItem('schoolHubTutorialSeen','1'); }
+    document.getElementById('tutorialBtn').onclick=()=>openTutorial(true);
+    document.getElementById('closeTutorial').onclick=closeTutorial;
+    document.getElementById('tutorialBack').onclick=()=>{if(tutorialIndex>0){tutorialIndex--;renderTutorial()}};
+    document.getElementById('tutorialNext').onclick=()=>{if(tutorialIndex<tutorialSteps.length-1){tutorialIndex++;renderTutorial()}else closeTutorial()};
+    document.getElementById('tutorialModal').addEventListener('click',e=>{if(e.target.id==='tutorialModal')closeTutorial()});
+
     document.getElementById('todayText').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
     applyTheme();renderSubjectControls();renderLinks();renderNotes();updateStats();updateTimer();goTo('dashboard');
+    if(!localStorage.getItem('schoolHubTutorialSeen')) setTimeout(()=>openTutorial(true),250);
   </script>
 </body>
 </html>
