@@ -308,12 +308,12 @@
           <div class="card"><h3 style="margin-bottom:17px">Profile</h3><label>Your name</label><input id="studentName" placeholder="Student" /><button class="btn primary" id="saveProfile" style="margin-top:13px">Save profile</button></div>
           <div class="card"><h3 style="margin-bottom:17px">Accent color</h3><div class="colors" id="colors"><button class="color" style="background:#1d4ed8" data-color="#1d4ed8" data-color2="#2563eb" aria-label="Purple"></button><button class="color" style="background:#2563eb" data-color="#2563eb" data-color2="#06b6d4" aria-label="Blue"></button><button class="color" style="background:#059669" data-color="#059669" data-color2="#22c55e" aria-label="Green"></button><button class="color" style="background:#e11d48" data-color="#e11d48" data-color2="#f97316" aria-label="Pink"></button><button class="color" style="background:#ea580c" data-color="#ea580c" data-color2="#facc15" aria-label="Orange"></button></div></div>
 
-          <div class="card"><h3 style="margin-bottom:10px">Subject categories</h3><p style="color:var(--muted)">Create categories for links and academic resources.</p><div style="display:flex;gap:8px"><input id="newSubject" placeholder="New subject name" /><button class="btn primary" id="addSubject">Add</button></div><div id="subjectManager" class="subject-manager"></div></div>
+          <div class="card"><h3 style="margin-bottom:10px">Subject categories</h3><p style="color:var(--muted)">Create categories for links and learning resources.</p><div style="display:flex;gap:8px"><input id="newSubject" placeholder="New subject name" /><button class="btn primary" id="addSubject">Add</button></div><div id="subjectManager" class="subject-manager"></div></div>
           <div class="card"><h3 style="margin-bottom:10px">Backup</h3><p style="color:var(--muted)">Export everything to a JSON file or import a previous backup.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="exportData">Export data</button><label class="btn" style="margin:0">Import data<input type="file" id="importData" accept="application/json" hidden /></label></div></div>
           <div class="card"><h3 style="margin-bottom:10px">Danger zone</h3><p style="color:var(--muted)">Delete all saved links, notes, settings, and focus history.</p><button class="btn danger" id="clearData">Clear all data</button></div>
         </div>
       </section>
-      <div class="footer">School Hub • Local-first and Vercel-ready</div>
+      <div class="footer">School Hub</div>
     </main>
   </div>
 
@@ -518,12 +518,12 @@
     document.getElementById('clearData').onclick=()=>{if(confirm('Clear ALL School Hub data? This cannot be undone.')){localStorage.removeItem(STORE_KEY);location.reload()}};
 
     const tutorialSteps=[
-      {icon:'SH',title:'Welcome to School Hub',copy:'This workspace keeps your academic links, notes, calculations, grades, and focus tools together in one organized dashboard.'},
+      {icon:'SH',title:'Welcome to School Hub',copy:'This workspace keeps your school-related links, notes, calculations, grades, and focus tools together in one organized dashboard.'},
       {icon:'01',title:'Organize links by subject',copy:'Open Saved Links to add websites and assign each one to a subject category. Use the subject filter or search field to find resources quickly.'},
       {icon:'02',title:'Manage subject categories',copy:'Open Settings to create your own subject categories. Categories can be used to organize the links you save.'},
       {icon:'03',title:'Build your weekly schedule',copy:'Open Schedule to add classes with a day, subject, start and end time, and room or location.'},
-      {icon:'04',title:'Keep academic notes',copy:'The Notes section lets you create separate notes. Changes are saved automatically in this browser as you type.'},
-      {icon:'05',title:'Use the academic tools',copy:'Use the Calculator for everyday math, the Grade Calculator to check points and final-exam targets, and the Focus Timer for study sessions.'},
+      {icon:'04',title:'Keep personal notes',copy:'The Notes section lets you create separate notes. Changes are saved automatically in this browser as you type.'},
+      {icon:'05',title:'Use the learning tools',copy:'Use the Calculator for everyday math, the Grade Calculator to check points and final-exam targets, and the Focus Timer for study sessions.'},
       {icon:'06',title:'Backup your workspace',copy:'Your School Hub information is stored locally in this browser. Use the export option in Settings to save a backup that you can import later.'}
     ];
     let tutorialIndex=0;
