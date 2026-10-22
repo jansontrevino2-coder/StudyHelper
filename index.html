@@ -9,6 +9,7 @@
 <!DOCTYPE html>
 <!DOCTYPE html>
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
  <head>
   <meta charset="utf-8"/>
@@ -993,6 +994,9 @@ label {
        <option>
         Sunday
        </option>
+       <option>
+        Week-long
+       </option>
       </select>
      </div>
      <div>
@@ -1313,6 +1317,10 @@ window.delLink = id => {
 function renderSchedule() {
   let days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   let out = '';
+  const weekLong = d.schedule.filter(x => x.day === 'Week-long').sort((a, b) => a.start.localeCompare(b.start));
+  if (weekLong.length) {
+    out += '<h3>Week-long</h3>' + weekLong.map(x => `<div class="item"><div class="avatar">${esc(x.subject[0])}</div><div><b>${esc(x.name)}</b><small style="display:block">All week · ${esc(x.start)}–${esc(x.end)} · ${esc(x.subject)} ${x.room?'· '+esc(x.room):''}</small></div><div class="row"><button class="btn" onclick="openClass('${x.id}')">Edit</button><button class="btn danger" onclick="delClass('${x.id}')">Delete</button></div></div>`).join('');
+  }
   for (let day of days) {
     let a = d.schedule.filter(x => x.day === day).sort((a, b) => a.start.localeCompare(b.start));
     if (a.length) out += `<h3>${day}</h3>` + a.map(x => `<div class="item"><div class="avatar">${esc(x.subject[0])}</div><div><b>${esc(x.name)}</b><small style="display:block">${esc(x.start)}–${esc(x.end)} · ${esc(x.subject)} ${x.room?'· '+esc(x.room):''}</small></div><div class="row"><button class="btn" onclick="openClass('${x.id}')">Edit</button><button class="btn danger" onclick="delClass('${x.id}')">Delete</button></div></div>`).join('')
