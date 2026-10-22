@@ -1622,7 +1622,7 @@ async function loadMessages() {
   messageList.innerHTML = rows.length ? rows.map(message => `<div class="bubble ${message.sender_id===user.id?'mine':''}">${esc(maskBlockedMessageWords(message.body))}<small>${new Date(message.created_at).toLocaleString()}</small></div>`).join('') : '<div class="empty">No messages yet.</div>';
   messageList.scrollTop = messageList.scrollHeight;
 }
-const BLOCKED_MESSAGE_WORDS = ['fuck','shit','bitch','asshole','dick','pussy','cunt','bastard'];
+const BLOCKED_MESSAGE_WORDS = ['fuck','shit','bitch','asshole','dick','pussy','cunt','bastard','nigger','coon','nigga','ass','cock','ballsack'];
 function containsBlockedMessageWord(text) {
   const normalized = text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
   return BLOCKED_MESSAGE_WORDS.some(word => new RegExp(`\\b${word}\\b`, 'i').test(normalized));
