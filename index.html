@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!DOCTYPE html>
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
  <head>
   <meta charset="utf-8"/>
@@ -798,14 +799,27 @@ label {
       ×
      </button>
     </div>
+    <div id="signupFields" style="display:none">
+     <label>
+      Display name
+     </label>
+     <input id="signupDisplayName" maxlength="40" placeholder="Your name"/>
+     <label style="margin-top:10px">
+      Username
+     </label>
+     <input id="signupUsername" maxlength="24" placeholder="letters, numbers, underscores"/>
+    </div>
     <label>
      Email
     </label>
-    <input id="email" type="email"/>
+    <input autocomplete="email" id="email" type="email"/>
     <label style="margin-top:10px">
      Password
     </label>
-    <input id="password" type="password"/>
+    <input autocomplete="current-password" id="password" type="password"/>
+    <p class="muted" id="authHelp" style="margin:12px 0 0">
+     Sign in with an existing School Hub account.
+    </p>
     <div class="between" style="margin-top:12px">
      <button class="btn" id="authMode">
       Create account instead
@@ -1014,6 +1028,10 @@ const authMode = byId('authMode');
 const authSubmit = byId('authSubmit');
 const email = byId('email');
 const password = byId('password');
+const signupFields = byId('signupFields');
+const signupDisplayName = byId('signupDisplayName');
+const signupUsername = byId('signupUsername');
+const authHelp = byId('authHelp');
 const tutorial = byId('tutorial');
 const tTitle = byId('tTitle');
 const tCopy = byId('tCopy');
@@ -1375,21 +1393,32 @@ authBtn.onclick = async () => {
 };
 authMode.onclick = () => {
   createMode = !createMode;
-  authTitle.textContent = authSubmit.textContent = createMode ? 'Create account' : 'Sign in';
-  authMode.textContent = createMode ? 'Sign in instead' : 'Create account instead'
+  authTitle.textContent = createMode ? 'Create your account' : 'Sign in';
+  authSubmit.textContent = createMode ? 'Create account' : 'Sign in';
+  authMode.textContent = createMode ? 'Sign in instead' : 'Create account instead';
+  signupFields.style.display = createMode ? 'block' : 'none';
+  password.autocomplete = createMode ? 'new-password' : 'current-password';
+  authHelp.textContent = createMode ? 'Create a personal School Hub account. A confirmation email may be required.' : 'Sign in with an existing School Hub account.';
 };
 authSubmit.onclick = async () => {
-  let r = createMode ? await sb.auth.signUp({
-    email: email.value,
-    password: password.value
-  }) : await sb.auth.signInWithPassword({
-    email: email.value,
-    password: password.value
-  });
-  if (r.error) return toast(r.error.message);
+  const accountEmail = email.value.trim();
+  const accountPassword = password.value;
+  if (!accountEmail || accountPassword.length < 6) return toast('Enter an email and a password of at least 6 characters.');
+  if (createMode) {
+    const displayNameValue = signupDisplayName.value.trim();
+    const usernameValue = signupUsername.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+    if (!displayNameValue || usernameValue.length < 3) return toast('Enter a display name and a username of at least 3 characters.');
+    const result = await sb.auth.signUp({email: accountEmail, password: accountPassword, options: {emailRedirectTo: window.location.origin, data: {display_name: displayNameValue, username: usernameValue}}});
+    if (result.error) return toast(result.error.message);
+    closeModal('authModal');
+    await loadSocial();
+    return toast(result.data.session ? 'Account created and signed in.' : 'Account created. Check your email to confirm it.');
+  }
+  const result = await sb.auth.signInWithPassword({email: accountEmail, password: accountPassword});
+  if (result.error) return toast(result.error.message);
   closeModal('authModal');
   await loadSocial();
-  toast(createMode ? 'Account created' : 'Signed in')
+  toast('Signed in');
 };
 async function loadSocial() {
   if (!sb) return authUI();
