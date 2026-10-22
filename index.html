@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <!DOCTYPE html>
 <!DOCTYPE html>
+<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
  <head>
   <meta charset="utf-8"/>
@@ -840,6 +842,22 @@ label {
         Clear local data
        </button>
       </div>
+      <div class="card">
+       <h3>
+        Custom message filter
+       </h3>
+       <p class="muted">
+        Add words that should be blocked in messages on this device.
+       </p>
+       <div class="row">
+        <input id="customFilterWord" maxlength="40" placeholder="Add a blocked word"/>
+        <button class="btn primary" id="addFilterWord">
+         Add
+        </button>
+       </div>
+       <div class="list" id="customFilterList" style="margin-top:10px">
+       </div>
+      </div>
      </div>
     </section>
    </main>
@@ -1077,6 +1095,9 @@ const timerReset = byId('timerReset');
 const subjectName = byId('subjectName');
 const addSubject = byId('addSubject');
 const subjects = byId('subjects');
+const customFilterWord = byId('customFilterWord');
+const addFilterWord = byId('addFilterWord');
+const customFilterList = byId('customFilterList');
 const authModal = byId('authModal');
 const authTitle = byId('authTitle');
 const authMode = byId('authMode');
@@ -1622,18 +1643,65 @@ async function loadMessages() {
   messageList.innerHTML = rows.length ? rows.map(message => `<div class="bubble ${message.sender_id===user.id?'mine':''}">${esc(maskBlockedMessageWords(message.body))}<small>${new Date(message.created_at).toLocaleString()}</small></div>`).join('') : '<div class="empty">No messages yet.</div>';
   messageList.scrollTop = messageList.scrollHeight;
 }
-const BLOCKED_MESSAGE_WORDS = ['fuck','shit','bitch','asshole','dick','pussy','cunt','bastard','nigger','coon','nigga','ass','cock','ballsack'];
+const BLOCKED_MESSAGE_WORDS = ['fuck','shit','bitch','asshole','dick','pussy','cunt','bastard'];
+const CUSTOM_FILTER_KEY = 'schoolHubCustomBlockedWords';
+function getCustomBlockedWords() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CUSTOM_FILTER_KEY) || '[]');
+    return Array.isArray(saved) ? saved.filter(word => typeof word === 'string') : [];
+  } catch { return []; }
+}
+function getAllBlockedWords() {
+  return [...new Set([...BLOCKED_MESSAGE_WORDS, ...getCustomBlockedWords()].map(word => word.trim().toLowerCase()).filter(Boolean))];
+}
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 function containsBlockedMessageWord(text) {
-  const normalized = text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-  return BLOCKED_MESSAGE_WORDS.some(word => new RegExp(`\\b${word}\\b`, 'i').test(normalized));
+  try {
+    const normalized = String(text).toLowerCase().replace(/[^a-z0-9\s_-]/g, ' ');
+    return getAllBlockedWords().some(word => new RegExp(`\\b${escapeRegExp(word)}\\b`, 'i').test(normalized));
+  } catch (error) {
+    console.warn('Message filter failed open:', error);
+    return false;
+  }
 }
 function maskBlockedMessageWords(text) {
-  let filtered = text;
-  for (const word of BLOCKED_MESSAGE_WORDS) {
-    filtered = filtered.replace(new RegExp(`\\b${word}\\b`, 'gi'), match => '*'.repeat(match.length));
+  try {
+    let filtered = String(text);
+    for (const word of getAllBlockedWords()) {
+      filtered = filtered.replace(new RegExp(`\\b${escapeRegExp(word)}\\b`, 'gi'), match => '*'.repeat(match.length));
+    }
+    return filtered;
+  } catch {
+    return String(text);
   }
-  return filtered;
 }
+function renderCustomFilterWords() {
+  if (!customFilterList) return;
+  const words = getCustomBlockedWords();
+  customFilterList.innerHTML = words.length ? words.map(word => `<div class="item"><div class="avatar">W</div><div><b>${esc(word)}</b></div><button class="btn danger" onclick="removeCustomFilterWord('${encodeURIComponent(word)}')">Remove</button></div>`).join('') : '<div class="empty">No custom blocked words.</div>';
+}
+function addCustomFilterWord() {
+  if (!customFilterWord) return;
+  const word = customFilterWord.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!word) return toast('Enter a word to block.');
+  const words = getCustomBlockedWords();
+  if (getAllBlockedWords().includes(word)) return toast('That word is already blocked.');
+  words.push(word);
+  localStorage.setItem(CUSTOM_FILTER_KEY, JSON.stringify(words));
+  customFilterWord.value = '';
+  renderCustomFilterWords();
+  toast('Custom blocked word added.');
+}
+window.removeCustomFilterWord = encoded => {
+  const word = decodeURIComponent(encoded);
+  localStorage.setItem(CUSTOM_FILTER_KEY, JSON.stringify(getCustomBlockedWords().filter(item => item !== word)));
+  renderCustomFilterWords();
+};
+if (addFilterWord) addFilterWord.onclick = addCustomFilterWord;
+if (customFilterWord) customFilterWord.addEventListener('keydown', event => { if (event.key === 'Enter') addCustomFilterWord(); });
+renderCustomFilterWords();
 
 async function sendCurrentMessage() {
   const body = messageInput.value.trim();
@@ -1642,9 +1710,11 @@ async function sendCurrentMessage() {
     toast('That message contains a blocked word.');
     return;
   }
-  messageInput.value = '';
+  sendMessage.disabled = true;
   const {error} = await sb.from('messages').insert({sender_id:user.id,receiver_id:selectedChatFriend.id,body});
-  if (error) { toast(error.message); messageInput.value = body; return; }
+  sendMessage.disabled = false;
+  if (error) { toast('Message failed: ' + error.message); return; }
+  messageInput.value = '';
   await loadMessages();
 }
 sendMessage.onclick = sendCurrentMessage;
