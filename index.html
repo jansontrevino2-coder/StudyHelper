@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <!DOCTYPE html>
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
  <head>
   <meta charset="utf-8"/>
@@ -401,6 +402,8 @@ label {
     grid-column: 1/-1
   }
 }
+  
+.message-layout{grid-template-columns:320px minmax(0,1fr)}.chat-card{display:flex;flex-direction:column;min-height:560px}.message-list{flex:1;display:flex;flex-direction:column;gap:8px;overflow:auto;max-height:440px;padding:10px 0}.bubble{max-width:75%;padding:10px 12px;border-radius:13px;background:var(--p2);align-self:flex-start;overflow-wrap:anywhere}.bubble.mine{align-self:flex-end;background:var(--a);color:#fff}.bubble small{display:block;margin-top:5px;opacity:.7}.conversation.on{border-color:var(--a);background:color-mix(in srgb,var(--a) 15%,var(--p2))}.message-compose{margin-top:12px}@media(max-width:800px){.message-layout{grid-template-columns:1fr}.chat-card{min-height:500px}}
   </style>
  </head>
  <body>
@@ -428,6 +431,9 @@ label {
      </button>
      <button class="nav" data-page="friends">
       Friends
+     </button>
+     <button class="nav" data-page="messages">
+      Messages
      </button>
      <button class="nav" data-page="links">
       Saved Links
@@ -623,6 +629,54 @@ label {
          </span>
         </div>
         <div class="list" id="friendList">
+        </div>
+       </div>
+      </div>
+     </div>
+    </section>
+    <section class="page" id="messages">
+     <div class="between">
+      <div>
+       <h2>
+        Messages
+       </h2>
+       <p class="muted">
+        Private conversations with accepted friends.
+       </p>
+      </div>
+     </div>
+     <div class="card empty" id="messagesOff">
+      Sign in to message friends.
+     </div>
+     <div id="messagesOn" style="display:none">
+      <div class="grid message-layout">
+       <div class="card">
+        <h3>
+         Conversations
+        </h3>
+        <div class="list" id="conversationList">
+        </div>
+       </div>
+       <div class="card chat-card">
+        <div class="between">
+         <div>
+          <h3 id="chatName">
+           Select a friend
+          </h3>
+          <small class="muted" id="chatHandle">
+          </small>
+         </div>
+        </div>
+        <div class="message-list" id="messageList">
+         <div class="empty">
+          Choose a friend to start messaging.
+         </div>
+        </div>
+        <div class="row message-compose">
+         <input disabled="" id="messageInput" maxlength="1000" placeholder="Write a message"/>
+         <button class="btn primary" disabled="" id="sendMessage">
+          Send
+         </button>
         </div>
        </div>
       </div>
@@ -1032,6 +1086,14 @@ const signupFields = byId('signupFields');
 const signupDisplayName = byId('signupDisplayName');
 const signupUsername = byId('signupUsername');
 const authHelp = byId('authHelp');
+const messagesOff = byId('messagesOff');
+const messagesOn = byId('messagesOn');
+const conversationList = byId('conversationList');
+const chatName = byId('chatName');
+const chatHandle = byId('chatHandle');
+const messageList = byId('messageList');
+const messageInput = byId('messageInput');
+const sendMessage = byId('sendMessage');
 const tutorial = byId('tutorial');
 const tTitle = byId('tTitle');
 const tCopy = byId('tCopy');
@@ -1108,6 +1170,7 @@ function go(id) {
     dashboard: 'Dashboard',
     profile: 'Profile',
     friends: 'Friends',
+      messages: 'Messages',
     links: 'Saved Links',
     schedule: 'Schedule',
     notes: 'Notes',
@@ -1380,7 +1443,9 @@ const supabaseLibraryReady = Boolean(window.supabase && typeof window.supabase.c
 const sb = supabaseLibraryReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 let user = null,
   profile = null,
-  createMode = false;
+  createMode = false,
+  selectedChatFriend = null,
+  messageChannel = null;
 authBtn.onclick = async () => {
   if (user) {
     await sb.auth.signOut();
@@ -1452,8 +1517,8 @@ async function loadSocial() {
 
 function authUI() {
   authBtn.textContent = user ? 'Sign out' : 'Sign in';
-  profileOn.style.display = friendsOn.style.display = user ? 'block' : 'none';
-  profileOff.style.display = friendsOff.style.display = user ? 'none' : 'block';
+  profileOn.style.display = friendsOn.style.display = messagesOn.style.display = user ? 'block' : 'none';
+  profileOff.style.display = friendsOff.style.display = messagesOff.style.display = user ? 'none' : 'block';
   if (profile) {
     profileName.textContent = profile.display_name;
     profileHandle.textContent = '@' + profile.username;
@@ -1528,6 +1593,54 @@ async function loadFriends() {
   fc.textContent = p.length;
   friendList.innerHTML = p.length ? p.map(x => person(x)).join('') : '<div class="empty">No friends yet.</div>'
 }
+
+async function getAcceptedFriends() {
+  if (!user) return [];
+  const {data: rows, error} = await sb.from('friend_requests').select('sender_id,receiver_id,sender:profiles!friend_requests_sender_id_fkey(id,username,display_name),receiver:profiles!friend_requests_receiver_id_fkey(id,username,display_name)').eq('status','accepted').or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
+  if (error) { toast(error.message); return []; }
+  return (rows || []).map(row => row.sender_id === user.id ? row.receiver : row.sender);
+}
+async function loadConversations() {
+  if (!user) return;
+  const people = await getAcceptedFriends();
+  conversationList.innerHTML = people.length ? people.map(person => `<button class="btn conversation ${selectedChatFriend?.id===person.id?'on':''}" onclick="openConversation('${person.id}','${encodeURIComponent(person.display_name)}','${encodeURIComponent(person.username)}')">${esc(person.display_name)} <small>@${esc(person.username)}</small></button>`).join('') : '<div class="empty">Add a friend before messaging.</div>';
+}
+window.openConversation = async (id, encodedName, encodedUsername) => {
+  selectedChatFriend = {id, display_name: decodeURIComponent(encodedName), username: decodeURIComponent(encodedUsername)};
+  chatName.textContent = selectedChatFriend.display_name;
+  chatHandle.textContent = '@' + selectedChatFriend.username;
+  messageInput.disabled = sendMessage.disabled = false;
+  await loadMessages();
+  await loadConversations();
+  subscribeMessages();
+};
+async function loadMessages() {
+  if (!user || !selectedChatFriend) return;
+  const {data: rows, error} = await sb.from('messages').select('*').or(`and(sender_id.eq.${user.id},receiver_id.eq.${selectedChatFriend.id}),and(sender_id.eq.${selectedChatFriend.id},receiver_id.eq.${user.id})`).order('created_at',{ascending:true}).limit(200);
+  if (error) { messageList.innerHTML = `<div class="empty">${esc(error.message)}</div>`; return; }
+  messageList.innerHTML = rows.length ? rows.map(message => `<div class="bubble ${message.sender_id===user.id?'mine':''}">${esc(message.body)}<small>${new Date(message.created_at).toLocaleString()}</small></div>`).join('') : '<div class="empty">No messages yet.</div>';
+  messageList.scrollTop = messageList.scrollHeight;
+}
+async function sendCurrentMessage() {
+  const body = messageInput.value.trim();
+  if (!body || !selectedChatFriend) return;
+  messageInput.value = '';
+  const {error} = await sb.from('messages').insert({sender_id:user.id,receiver_id:selectedChatFriend.id,body});
+  if (error) { toast(error.message); messageInput.value = body; return; }
+  await loadMessages();
+}
+sendMessage.onclick = sendCurrentMessage;
+messageInput.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendCurrentMessage(); } });
+function subscribeMessages() {
+  if (messageChannel) sb.removeChannel(messageChannel);
+  if (!user || !selectedChatFriend) return;
+  messageChannel = sb.channel(`messages-${user.id}-${selectedChatFriend.id}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},payload => {
+    const message = payload.new;
+    const relevant = (message.sender_id===user.id && message.receiver_id===selectedChatFriend.id) || (message.sender_id===selectedChatFriend.id && message.receiver_id===user.id);
+    if (relevant) loadMessages();
+  }).subscribe();
+}
+
 if (sb) sb.auth.onAuthStateChange(() => setTimeout(loadSocial));
 const ts = [
   ['Welcome', 'School Hub keeps your academic tools in one workspace.'],
