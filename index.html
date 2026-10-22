@@ -7,6 +7,7 @@
 <!DOCTYPE html>
 <!DOCTYPE html>
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
  <head>
   <meta charset="utf-8"/>
@@ -1499,6 +1500,9 @@ authSubmit.onclick = async () => {
     const displayNameValue = signupDisplayName.value.trim();
     const usernameValue = signupUsername.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
     if (!displayNameValue || usernameValue.length < 3) return toast('Enter a display name and a username of at least 3 characters.');
+    if (containsBlockedName(displayNameValue) || containsBlockedName(usernameValue)) {
+      return toast('That display name or username contains a blocked word.');
+    }
     const result = await sb.auth.signUp({email: accountEmail, password: accountPassword, options: {emailRedirectTo: window.location.origin, data: {display_name: displayNameValue, username: usernameValue}}});
     if (result.error) return toast(result.error.message);
     closeModal('authModal');
@@ -1556,13 +1560,17 @@ function authUI() {
 }
 saveProfile.onclick = async () => {
   let u = username.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-  if (u.length < 3 || !displayName.value.trim()) return toast('Invalid profile details');
+  const nextDisplayName = displayName.value.trim();
+  if (u.length < 3 || !nextDisplayName) return toast('Invalid profile details');
+  if (containsBlockedName(nextDisplayName) || containsBlockedName(u)) {
+    return toast('That display name or username contains a blocked word.');
+  }
   let {
     data: p,
     error
   } = await sb.from('profiles').update({
     username: u,
-    display_name: displayName.value.trim(),
+    display_name: nextDisplayName,
     bio: bio.value.trim()
   }).eq('id', user.id).select().single();
   if (error) return toast(error.message);
@@ -1690,6 +1698,18 @@ function containsBlockedMessageWord(text) {
     return false;
   }
 }
+function containsBlockedName(text) {
+  try {
+    const normalizedName = String(text).toLowerCase().replace(/[^a-z0-9]/g, '');
+    return getAllBlockedWords().some(word => {
+      const normalizedWord = String(word).toLowerCase().replace(/[^a-z0-9]/g, '');
+      return normalizedWord && normalizedName.includes(normalizedWord);
+    });
+  } catch (error) {
+    console.warn('Name filter failed:', error);
+    return false;
+  }
+}
 function maskBlockedMessageWords(text) {
   try {
     let filtered = String(text);
@@ -1711,7 +1731,7 @@ function addCustomFilterWord() {
   const word = customFilterWord.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
   if (!word) return toast('Enter a word to block.');
   const words = getCustomBlockedWords();
-  if (getAllBlockedWords().includes(word)) return toast('That word is already blocked.');
+  if (getAllBlockedWords().some(item => item.toLowerCase() === word.toLowerCase())) return toast('That word is already blocked.');
   words.push(word);
   localStorage.setItem(CUSTOM_FILTER_KEY, JSON.stringify(words));
   customFilterWord.value = '';
