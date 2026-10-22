@@ -6,6 +6,7 @@
 <!DOCTYPE html>
 <!DOCTYPE html>
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
  <head>
   <meta charset="utf-8"/>
@@ -407,6 +408,8 @@ label {
 }
   
 .message-layout{grid-template-columns:320px minmax(0,1fr)}.chat-card{display:flex;flex-direction:column;min-height:560px}.message-list{flex:1;display:flex;flex-direction:column;gap:8px;overflow:auto;max-height:440px;padding:10px 0}.bubble{max-width:75%;padding:10px 12px;border-radius:13px;background:var(--p2);align-self:flex-start;overflow-wrap:anywhere}.bubble.mine{align-self:flex-end;background:var(--a);color:#fff}.bubble small{display:block;margin-top:5px;opacity:.7}.conversation.on{border-color:var(--a);background:color-mix(in srgb,var(--a) 15%,var(--p2))}.message-compose{margin-top:12px}@media(max-width:800px){.message-layout{grid-template-columns:1fr}.chat-card{min-height:500px}}
+  
+.conversation{width:100%;display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center;text-align:left}.conversation .avatar{width:42px;height:42px;border-radius:11px}.conversation-info{min-width:0}.conversation-info strong,.conversation-info small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.conversation-info small{color:var(--m);margin-top:3px}.conversation.on .conversation-info small{color:inherit;opacity:.78}
   </style>
  </head>
  <body>
@@ -1201,7 +1204,8 @@ function go(id) {
     timer: 'Focus Timer',
     settings: 'Settings'
   } [id]) : id;
-  side.classList.remove('on')
+  side.classList.remove('on');
+  if (id === 'messages' && user) loadConversations()
 }
 menu.onclick = () => side.classList.toggle('on');
 date.textContent = new Date().toLocaleDateString(undefined, {
@@ -1532,7 +1536,7 @@ async function loadSocial() {
       p = n
     }
     profile = p;
-    await Promise.all([loadRequests(), loadFriends()])
+    await Promise.all([loadRequests(), loadFriends(), loadConversations()])
   }
   authUI()
 }
@@ -1604,7 +1608,7 @@ window.respond = async (id, status) => {
     status
   }).eq('id', id);
   if (error) return toast(error.message);
-  await Promise.all([loadRequests(), loadFriends()])
+  await Promise.all([loadRequests(), loadFriends(), loadConversations()])
 };
 async function loadFriends() {
   let {
@@ -1623,9 +1627,29 @@ async function getAcceptedFriends() {
   return (rows || []).map(row => row.sender_id === user.id ? row.receiver : row.sender);
 }
 async function loadConversations() {
-  if (!user) return;
-  const people = await getAcceptedFriends();
-  conversationList.innerHTML = people.length ? people.map(person => `<button class="btn conversation ${selectedChatFriend?.id===person.id?'on':''}" onclick="openConversation('${person.id}','${encodeURIComponent(person.display_name)}','${encodeURIComponent(person.username)}')">${esc(person.display_name)} <small>@${esc(person.username)}</small></button>`).join('') : '<div class="empty">Add a friend before messaging.</div>';
+  if (!user || !sb) return;
+  conversationList.innerHTML = '<div class="empty">Loading friends...</div>';
+
+  const { data: rows, error } = await sb
+    .from('friend_requests')
+    .select('sender_id,receiver_id,sender:profiles!friend_requests_sender_id_fkey(id,username,display_name),receiver:profiles!friend_requests_receiver_id_fkey(id,username,display_name)')
+    .eq('status', 'accepted')
+    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
+
+  if (error) {
+    console.error('Conversation friend load failed:', error);
+    conversationList.innerHTML = `<div class="empty">Could not load friends: ${esc(error.message)}</div>`;
+    return;
+  }
+
+  const friends = (rows || [])
+    .map(row => row.sender_id === user.id ? row.receiver : row.sender)
+    .filter(Boolean)
+    .sort((a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username));
+
+  conversationList.innerHTML = friends.length
+    ? friends.map(friend => `<button class="btn conversation ${selectedChatFriend?.id === friend.id ? 'on' : ''}" onclick="openConversation('${friend.id}','${encodeURIComponent(friend.display_name)}','${encodeURIComponent(friend.username)}')"><span class="avatar">${initials(friend.display_name)}</span><span class="conversation-info"><strong>${esc(friend.display_name)}</strong><small>@${esc(friend.username)}</small></span></button>`).join('')
+    : '<div class="empty">No accepted friends yet.</div>';
 }
 window.openConversation = async (id, encodedName, encodedUsername) => {
   selectedChatFriend = {id, display_name: decodeURIComponent(encodedName), username: decodeURIComponent(encodedUsername)};
