@@ -11,6 +11,8 @@
 <!DOCTYPE html>
 <!DOCTYPE html>
 <!DOCTYPE html>
+<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
  <head>
   <meta charset="utf-8"/>
@@ -418,6 +420,8 @@ label {
 .avatar.has-photo,.profile-photo{background:var(--p2);background-size:cover;background-position:center;background-repeat:no-repeat;color:transparent}.pfp-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}.pfp-controls small{width:100%}@media(max-width:520px){.pfp-controls{margin-left:0;width:100%}}
   
 .message-image{display:block;max-width:min(320px,100%);max-height:320px;border-radius:12px;object-fit:cover;cursor:pointer;margin-bottom:6px}.bubble.image-bubble{padding:6px}.image-send-status{font-size:12px;color:var(--m)}
+  
+.message-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:5px}.message-delete{border:0;background:transparent;color:inherit;opacity:.65;padding:1px 3px;font-size:11px;cursor:pointer}.message-delete:hover{opacity:1;text-decoration:underline}.bubble:not(.mine) .message-delete{display:none}
   </style>
  </head>
  <body>
@@ -1799,7 +1803,8 @@ async function loadMessages() {
     const imageUrl = message.image_path ? messageImageUrl(message.image_path) : '';
     const image = imageUrl ? `<img class="message-image" src="${esc(imageUrl)}" alt="Shared image" loading="lazy" onclick="openMessageImage('${encodeURIComponent(imageUrl)}')">` : '';
     const text = message.body ? esc(maskBlockedMessageWords(message.body)) : '';
-    return `<div class="bubble ${message.sender_id===user.id?'mine':''} ${image?'image-bubble':''}">${image}${text}<small>${new Date(message.created_at).toLocaleString()}</small></div>`;
+    const deleteButton = message.sender_id === user.id ? `<button class="message-delete" onclick="deleteMessage('${message.id}','${encodeURIComponent(message.image_path || '')}')" title="Delete message">Delete</button>` : '';
+    return `<div class="bubble ${message.sender_id===user.id?'mine':''} ${image?'image-bubble':''}">${image}${text}<div class="message-meta"><small>${new Date(message.created_at).toLocaleString()}</small>${deleteButton}</div></div>`;
   }).join('') : '<div class="empty">No messages yet.</div>';
   messageList.scrollTop = messageList.scrollHeight;
 }
@@ -1875,19 +1880,52 @@ if (addFilterWord) addFilterWord.onclick = addCustomFilterWord;
 if (customFilterWord) customFilterWord.addEventListener('keydown', event => { if (event.key === 'Enter') addCustomFilterWord(); });
 renderCustomFilterWords();
 
+window.deleteMessage = async (messageId, encodedImagePath) => {
+  if (!user || !messageId) return;
+  if (!confirm('Delete this message for everyone?')) return;
+  const imagePath = decodeURIComponent(encodedImagePath || '');
+  const {error} = await sb.from('messages').delete().eq('id', messageId).eq('sender_id', user.id);
+  if (error) return toast('Delete failed: ' + error.message);
+  if (imagePath) {
+    const {error: storageError} = await sb.storage.from('message-images').remove([imagePath]);
+    if (storageError) console.warn('Image cleanup failed:', storageError.message);
+  }
+  await loadMessages();
+  toast('Message deleted.');
+};
+
 async function sendCurrentMessage() {
   const body = messageInput.value.trim();
-  if (!body || !selectedChatFriend) return;
+  if (!body) return;
+  if (!user) return toast('Sign in before sending messages.');
+  if (!selectedChatFriend) return toast('Select a friend first.');
+  if (!sb) return toast('Messaging service is not available.');
   if (containsBlockedMessageWord(body)) {
     toast('That message contains a blocked word.');
     return;
   }
   sendMessage.disabled = true;
-  const {error} = await sb.from('messages').insert({sender_id:user.id,receiver_id:selectedChatFriend.id,body});
-  sendMessage.disabled = false;
-  if (error) { toast('Message failed: ' + error.message); return; }
-  messageInput.value = '';
-  await loadMessages();
+  try {
+    const {error} = await sb.from('messages').insert([{
+      sender_id: user.id,
+      receiver_id: selectedChatFriend.id,
+      body: body,
+      image_path: null
+    }]);
+    if (error) {
+      console.error('Text message insert failed:', error);
+      toast('Message failed: ' + error.message);
+      return;
+    }
+    messageInput.value = '';
+    await loadMessages();
+  } catch (error) {
+    console.error('Text message exception:', error);
+    toast('Message failed: ' + (error?.message || 'Unknown error'));
+  } finally {
+    sendMessage.disabled = false;
+    messageInput.focus();
+  }
 }
 sendMessage.onclick = sendCurrentMessage;
 messageInput.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendCurrentMessage(); } });
